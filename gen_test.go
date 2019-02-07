@@ -169,13 +169,6 @@ func TestGenTypescript(t *testing.T) {
 
 	o, err := g.Gen(s, gen.TargetOptions{})
 	assert.NoError(t, err)
-	_ = o
 
-	// log.Printf("o: %v", o)
-
-	// fp, err := os.Create("out.ts")
-	// assert.NoError(t, err)
-	// _, err = fp.Write([]byte(o))
-	// assert.NoError(t, err)
-	// fp.Close()
+	t.Logf("%s", o)
 }
