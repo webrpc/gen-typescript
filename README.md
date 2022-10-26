@@ -1,5 +1,8 @@
-webrpc Typescript generator
-===========================
+webrpc-gen Typescript templates
+===============================
+
+This repo contains the templates used by the `webrpc-gen` cli to code-generate
+webrpc Typescript server and client code.
 
 This generator, from a webrpc schema/design file will code-generate:
 
@@ -11,3 +14,30 @@ output of the generated code, and you shall see, its nothing fancy, just the sor
 write by hand.
 
 2. Server -- a nodejs Typescript server handler. See examples.
+
+
+## Usage
+
+```
+webrpc-gen -schema=example.ridl -target=typescript -server -client -out=./example.gen.ts
+```
+
+or 
+
+```
+webrpc-gen -schema=example.ridl -target=github.com/webrpc/gen-typescript@v0.6.0 -server -client -out=./example.gen.ts
+```
+
+or
+
+```
+webrpc-gen -schema=example.ridl -target=./local-templates-on-disk -server -client -out=./example.gen.ts
+```
+
+As you can see, the `-target` supports default `golang`, any git URI, or a local folder :)
+
+
+
+## LICENSE
+
+[LICENSE](./LICENSE)
