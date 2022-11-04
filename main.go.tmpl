@@ -12,9 +12,8 @@
 
 {{- /* Options with default values. */ -}}
 {{- $opts := dict -}}
-{{- set $opts "Client" (coalesce .Opts.Version false) -}}
-{{- set $opts "Server" (coalesce .Opts.Version false) -}}
-{{- set $opts "Extra" (coalesce .Opts.Extra "") -}}
+{{- set $opts "Client" (ternary (in .Opts.Client "" "true") true false) -}}
+{{- set $opts "Server" (ternary (in .Opts.Server "" "true") true false) -}}
 
 {{- /* Print help on -Help. */ -}}
 {{- if exists .Opts "Help" -}}
@@ -49,12 +48,12 @@ export const WebRPCSchemaHash = "{{.SchemaHash}}"
 
 {{template "types" .}}
 
-{{- if .Opts.Client}}
+{{- if $opts.Client}}
   {{template "client" .}}
   {{template "client_helpers" .}}
 {{- end}}
 
-{{- if .Opts.Server}}
+{{- if $opts.Server}}
   {{template "server" .}}
   {{template "server_helpers" .}}
 {{- end}}
