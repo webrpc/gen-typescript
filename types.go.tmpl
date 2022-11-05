@@ -19,7 +19,13 @@ export enum {{$enumName}} {
 {{- if .Type | isStruct  }}
 export interface {{.Name | tsInterfaceName}} {
   {{- range .Fields}}
-  {{if . | tsExportableField -}}{{template "fieldName" dict "Field" . "MetaKey" "json"}}{{if .Optional}}?{{end}}: {{.Type | tsFieldType}}{{- end -}}
+  {{- $isExportable := true -}}
+  {{- range $meta := .Meta -}} 
+      {{- if eq (get $meta "json") "-" -}}
+        {{- $isExportable = false}}
+      {{- end -}}
+  {{- end }}
+  {{if $isExportable -}}{{template "fieldName" dict "Field" .}}{{if .Optional}}?{{end}}: {{.Type | tsFieldType}}{{- end -}}
   {{- end}}
 }
 {{end -}}

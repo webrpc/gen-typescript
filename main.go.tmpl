@@ -30,6 +30,27 @@
   {{- end -}}
 {{- end -}}
 
+{{- /* Map webrpc data types to JS. */ -}}
+{{- $typeMap := dict }}
+{{- set $typeMap "null" "null" -}}
+{{- set $typeMap "any" "any" -}}
+{{- set $typeMap "byte" "string" -}}
+{{- set $typeMap "bool" "boolean" -}}
+{{- set $typeMap "uint" "number" -}}
+{{- set $typeMap "uint8" "number" -}}
+{{- set $typeMap "uint16" "number" -}}
+{{- set $typeMap "uint32" "number" -}}
+{{- set $typeMap "uint64" "number" -}}
+{{- set $typeMap "int" "number" -}}
+{{- set $typeMap "int8" "number" -}}
+{{- set $typeMap "int16" "number" -}}
+{{- set $typeMap "int32" "number" -}}
+{{- set $typeMap "int64" "number" -}}
+{{- set $typeMap "float32" "number" -}}
+{{- set $typeMap "float64" "number" -}}
+{{- set $typeMap "string" "string" -}}
+{{- set $typeMap "timestamp" "string" -}}
+
 /* eslint-disable */
 // {{.SchemaName}} {{.SchemaVersion}} {{.SchemaHash}}
 // --
@@ -54,8 +75,8 @@ export const WebRPCSchemaHash = "{{.SchemaHash}}"
 {{- end}}
 
 {{- if $opts.Server}}
-  {{template "server" .}}
-  {{template "server_helpers" .}}
+  {{template "server" dict "Services" .Services "Opts" $opts "TypeMap" $typeMap}}
+  {{template "server_helpers" dict "Messages" .Messages "TypeMap" $typeMap}}
 {{- end}}
 
 {{- end}}

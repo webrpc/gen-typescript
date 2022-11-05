@@ -1,6 +1,8 @@
 {{define "server"}}
+{{- $services := .Services -}}
+{{- $typeMap := .TypeMap -}}
 
-{{- if .Services}}
+{{- if $services}}
 //
 // Server
 //
@@ -18,7 +20,7 @@ export class WebRPCError extends Error {
 
 import express from 'express'
 
-    {{- range .Services}}
+    {{- range $services}}
         {{$name := .Name}}
         {{$serviceName := .Name | tsServiceInterfaceName}}
 
@@ -54,7 +56,7 @@ import express from 'express'
                                     }
                                 {{end -}}
 
-                                if ("{{ .Name }}" in req.body && !validateType(req.body["{{ .Name }}"], "{{ .Type | jsFieldType }}")) {
+                                if ("{{ .Name }}" in req.body && !validateType(req.body["{{ .Name }}"], "{{template "type" dict "Type" .Type "TypeMap" $typeMap}}")) {
                                     throw new WebRPCError("Invalid Argument: {{ .Name }}")
                                 }
                             {{end}}

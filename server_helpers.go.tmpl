@@ -1,4 +1,6 @@
 {{ define "server_helpers" }}
+{{- $messages := .Messages -}}
+{{- $typeMap := .TypeMap }}
 
 const JS_TYPES = [
     "bigint",
@@ -11,15 +13,15 @@ const JS_TYPES = [
     "undefined"
 ]
 
-{{ range .Messages }}
+{{ range $messages }}
     const validate{{ .Name }} = (value: any) => {
         {{ range .Fields }}
             {{ if .Optional }}
-                if ("{{template "fieldName" dict "Field" . }}" in value && !validateType(value["{{template "fieldName" dict "Field" . }}"], "{{ .Type | jsFieldType }}")) {
+                if ("{{template "fieldName" dict "Field" . }}" in value && !validateType(value["{{template "fieldName" dict "Field" . }}"], "{{template "type" dict "Type" .Type "TypeMap" $typeMap}}")) {
                     return false
                 }
             {{ else }}
-                if (!("{{template "fieldName" dict "Field" . }}" in value) || !validateType(value["{{template "fieldName" dict "Field" . }}"], "{{ .Type | jsFieldType }}")) {
+                if (!("{{template "fieldName" dict "Field" . }}" in value) || !validateType(value["{{template "fieldName" dict "Field" . }}"], "{{template "type" dict "Type" .Type "TypeMap" $typeMap}}")) {
                     return false
                 }
             {{ end }}
@@ -30,7 +32,7 @@ const JS_TYPES = [
 {{ end }}
 
 const TYPE_VALIDATORS: { [type: string]: (value: any) => boolean } = {
-    {{ range .Messages }}
+    {{ range $messages }}
         {{ .Name }}: validate{{ .Name }},
     {{ end }}
 }

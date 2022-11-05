@@ -1,0 +1,24 @@
+{{- define "type" -}}
+
+{{- /* Required args */ -}}
+{{- $typeMap := .TypeMap -}}
+{{- /* .Type */ -}}
+
+{{- if isMapType .Type -}}
+
+    object
+
+{{- else if isArrayType .Type -}}
+
+    {{template "type" dict "Type" (arrayItemType .Type) "TypeMap" $typeMap}}[]
+
+{{- else if isBaseType .Type -}}
+
+    {{ get $typeMap .Type }}
+
+{{- else -}}
+
+    {{.Type}}
+
+{{- end -}}
+{{- end -}}
