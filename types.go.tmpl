@@ -6,7 +6,7 @@
 {{- if .Messages -}}
 {{range .Messages -}}
 
-{{if .Type | isEnum -}}
+{{if .Type | isEnumType -}}
 {{$enumName := .Name}}
 export enum {{$enumName}} {
 {{- range $i, $field := .Fields}}
@@ -16,7 +16,7 @@ export enum {{$enumName}} {
 }
 {{end -}}
 
-{{- if .Type | isStruct  }}
+{{- if .Type | isStructType  }}
 export interface {{.Name | tsInterfaceName}} {
   {{- range .Fields}}
   {{- $isExportable := true -}}
