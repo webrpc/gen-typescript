@@ -38,7 +38,7 @@ func WebRPCSchemaHash() string {
 type Kind uint32
 
 const (
-	Kind_USER  Kind = 1
+	Kind_USER Kind = 1
 	Kind_ADMIN Kind = 2
 )
 
@@ -48,7 +48,7 @@ var Kind_name = map[uint32]string{
 }
 
 var Kind_value = map[string]uint32{
-	"USER":  1,
+	"USER": 1,
 	"ADMIN": 2,
 }
 
@@ -74,12 +74,12 @@ func (x *Kind) UnmarshalJSON(b []byte) error {
 }
 
 type User struct {
-	ID         uint64                 `json:"id" db:"id"`
-	Username   string                 `json:"USERNAME" db:"username"`
-	Role       *Kind                  `json:"role"`
-	Meta       map[string]interface{} `json:"meta"`
-	InternalID uint64                 `json:"-"`
-	CreatedAt  *time.Time             `json:"created_at,omitempty" db:"created_at"`
+	Id uint64 `json:"id" db:"id"`
+	Username string `json:"USERNAME" db:"username"`
+	Role *Kind `json:"role"`
+	Meta map[string]interface{} `json:"meta"`
+	InternalId uint64 `json:"-"`
+	CreatedAt *time.Time `json:"created_at,omitempty" db:"created_at"`
 }
 
 type Page struct {
@@ -321,7 +321,7 @@ func (s *exampleServiceServer) serveFindUsersJSON(ctx context.Context, w http.Re
 		ret0, ret1, err = s.ExampleService.FindUsers(ctx, reqContent.Arg0)
 	}()
 	respContent := struct {
-		Ret0 *Page   `json:"page"`
+		Ret0 *Page `json:"page"`
 		Ret1 []*User `json:"users"`
 	}{ret0, ret1}
 
@@ -340,6 +340,7 @@ func (s *exampleServiceServer) serveFindUsersJSON(ctx context.Context, w http.Re
 	w.WriteHeader(http.StatusOK)
 	w.Write(respBody)
 }
+
 
 func RespondWithError(w http.ResponseWriter, err error) {
 	rpcErr, ok := err.(Error)
