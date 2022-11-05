@@ -5,11 +5,11 @@
 
 {{- if isMapType .Type -}}
 
-    object
+    {[key: {{template "type" dict "Type" (mapKeyType $type) "TypeMap" $typeMap}}]: {{template "type" dict "Type" (mapValueType $type) "TypeMap" $typeMap}}}
 
 {{- else if isListType .Type -}}
 
-    {{template "type" dict "Type" (listElemType .Type) "TypeMap" $typeMap}}[]
+    Array<{{template "type" dict "Type" (listElemType .Type) "TypeMap" $typeMap}}>
 
 {{- else if isStructType .Type -}}
 

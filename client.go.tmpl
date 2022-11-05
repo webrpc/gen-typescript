@@ -1,11 +1,14 @@
 {{define "client"}}
+
+{{- $typeMap := .TypeMap -}}
+
 {{- if .Services}}
 //
 // Client
 //
 
 {{- range .Services}}
-export class {{.Name}} implements {{.Name | tsServiceInterfaceName}} {
+export class {{.Name}} implements {{.Name}} {
   protected hostname: string
   protected fetch: Fetch
   protected path = '/rpc/{{.Name}}/'
@@ -18,8 +21,8 @@ export class {{.Name}} implements {{.Name | tsServiceInterfaceName}} {
   private url(name: string): string {
     return this.hostname + this.path + name
   }
-  {{range .Methods}}
-  {{.Name | tsMethodName}} = ({{. | tsMethodInputs}}): {{. | tsMethodOutputs}} => {
+  {{range $_, $method := .Methods}}
+  {{firstLetterToLower .Name}} = ({{template "methodInputs" dict "Method" . "TypeMap" $typeMap}}): Promise<{{$method.Name}}Return> => {
     return this.fetch(
       this.url('{{.Name}}'),
       {{- if .Inputs | len}}
@@ -30,9 +33,9 @@ export class {{.Name}} implements {{.Name | tsServiceInterfaceName}} {
     ).then((res) => {
       return buildResponse(res).then(_data => {
         return {
-        {{- $outputsCount := .Outputs|len -}}
-        {{- range $i, $output := .Outputs}}
-          {{$output | tsNewOutputArgResponse}}{{listComma $i $outputsCount}}
+        {{range $i, $output := .Outputs -}}
+          {{if gt $i 0}}, {{end}}
+          {{$output.Name}}: <{{template "type" dict "Type" $output.Type "TypeMap" $typeMap}}>(_data.{{$output.Name}})
         {{- end}}
         }
       })

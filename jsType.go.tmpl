@@ -1,0 +1,24 @@
+{{- define "jsType" -}}
+
+{{- /* Used to validate types on server. */ -}}
+{{- $type := .Type -}}
+{{- $typeMap := .TypeMap -}}
+
+{{- if isMapType .Type -}}
+
+    object
+
+{{- else if isListType .Type -}}
+
+    {{template "type" dict "Type" (listElemType .Type) "TypeMap" $typeMap}}[]
+
+{{- else if isStructType .Type -}}
+
+    {{.Type}}
+
+{{- else -}}
+
+    {{ get $typeMap .Type }}
+
+{{- end -}}
+{{- end -}}

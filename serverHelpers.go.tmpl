@@ -17,11 +17,11 @@ const JS_TYPES = [
     const validate{{ .Name }} = (value: any) => {
         {{ range .Fields }}
             {{ if .Optional }}
-                if ("{{template "fieldName" dict "Field" . }}" in value && !validateType(value["{{template "fieldName" dict "Field" . }}"], "{{template "type" dict "Type" .Type "TypeMap" $typeMap}}")) {
+                if ("{{template "fieldName" dict "Field" . }}" in value && !validateType(value["{{template "fieldName" dict "Field" . }}"], "{{template "jsType" dict "Type" .Type "TypeMap" $typeMap}}")) {
                     return false
                 }
             {{ else }}
-                if (!("{{template "fieldName" dict "Field" . }}" in value) || !validateType(value["{{template "fieldName" dict "Field" . }}"], "{{template "type" dict "Type" .Type "TypeMap" $typeMap}}")) {
+                if (!("{{template "fieldName" dict "Field" . }}" in value) || !validateType(value["{{template "fieldName" dict "Field" . }}"], "{{template "jsType" dict "Type" .Type "TypeMap" $typeMap}}")) {
                     return false
                 }
             {{ end }}

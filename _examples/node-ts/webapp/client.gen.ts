@@ -14,7 +14,6 @@ export const WebRPCSchemaVersion = "v1.0.0"
 // Schema hash generated from your RIDL schema
 export const WebRPCSchemaHash = "ecee5cfb3e360bc0bc632e78556b19a2c58d4e25"
 
-
 //
 // Types
 //
@@ -82,6 +81,7 @@ export class ExampleService implements ExampleService {
       ).then((res) => {
       return buildResponse(res).then(_data => {
         return {
+        
           status: <boolean>(_data.status)
         }
       })
@@ -94,6 +94,7 @@ export class ExampleService implements ExampleService {
       createHTTPRequest(args, headers)).then((res) => {
       return buildResponse(res).then(_data => {
         return {
+        
           code: <number>(_data.code), 
           user: <User>(_data.user)
         }

@@ -1,4 +1,7 @@
 {{define "types"}}
+
+{{- $typeMap := .TypeMap -}}
+
 //
 // Types
 //
@@ -17,7 +20,7 @@ export enum {{$enumName}} {
 {{end -}}
 
 {{- if .Type | isStructType  }}
-export interface {{.Name | tsInterfaceName}} {
+export interface {{.Name}} {
   {{- range .Fields}}
   {{- $isExportable := true -}}
   {{- range $meta := .Meta -}} 
@@ -25,7 +28,7 @@ export interface {{.Name | tsInterfaceName}} {
         {{- $isExportable = false}}
       {{- end -}}
   {{- end }}
-  {{if $isExportable -}}{{template "fieldName" dict "Field" .}}{{if .Optional}}?{{end}}: {{.Type | tsFieldType}}{{- end -}}
+  {{if $isExportable -}}{{template "fieldName" dict "Field" .}}{{if .Optional}}?{{end}}: {{template "type" dict "Type" .Type "TypeMap" $typeMap}}{{- end -}}
   {{- end}}
 }
 {{end -}}
@@ -34,22 +37,22 @@ export interface {{.Name | tsInterfaceName}} {
 
 {{if .Services}}
 {{- range .Services}}
-export interface {{.Name | tsServiceInterfaceName}} {
-{{- range .Methods}}
-  {{.Name | tsMethodName}}({{. | tsMethodInputs}}): {{. | tsMethodOutputs}}
+export interface {{.Name}} {
+{{- range $_, $method := .Methods}}
+  {{firstLetterToLower .Name}}({{template "methodInputs" dict "Method" . "TypeMap" $typeMap}}): Promise<{{$method.Name}}Return>
 {{- end}}
 }
 
 {{range .Methods -}}
-export interface {{. | tsMethodArgumentInputInterfaceName}} {
+export interface {{.Name}}Args {
 {{- range .Inputs}}
-  {{.Name}}{{if .Optional}}?{{end}}: {{.Type | tsFieldType}}
+  {{.Name}}{{if .Optional}}?{{end}}: {{template "type" dict "Type" .Type "TypeMap" $typeMap}}
 {{- end}}
 }
 
-export interface {{. | tsMethodArgumentOutputInterfaceName}} {
+export interface {{.Name}}Return {
 {{- range .Outputs}}
-  {{.Name}}{{if .Optional}}?{{end}}: {{.Type | tsFieldType}}
+  {{.Name}}{{if .Optional}}?{{end}}: {{template "type" dict "Type" .Type "TypeMap" $typeMap}}
 {{- end}}  
 }
 {{end}}
