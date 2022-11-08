@@ -18,30 +18,30 @@ write by hand.
 ## Usage
 
 ```
-webrpc-gen -schema=example.ridl -target=typescript -Server -Client -out=./example.gen.ts
+webrpc-gen -schema=example.ridl -target=typescript -server -client -out=./example.gen.ts
 ```
 
 or 
 
 ```
-webrpc-gen -schema=example.ridl -target=github.com/webrpc/gen-typescript@v0.7.0 -Server -Client -out=./example.gen.ts
+webrpc-gen -schema=example.ridl -target=github.com/webrpc/gen-typescript@v0.7.0 -server -client -out=./example.gen.ts
 ```
 
 or
 
 ```
-webrpc-gen -schema=example.ridl -target=./local-templates-on-disk -Server -Client -out=./example.gen.ts
+webrpc-gen -schema=example.ridl -target=./local-templates-on-disk -server -client -out=./example.gen.ts
 ```
 
 As you can see, the `-target` supports default `typescript`, any git URI, or a local folder :)
 
 ### Set custom template variables
-Change any of the following values by passing `-Option="Value"` CLI flag to `webrpc-gen`.
+Change any of the following values by passing `-option="Value"` CLI flag to `webrpc-gen`.
 
-| CLI option flag      | Description                | Default value              |
+| webrpc-gen -option   | Description                | Default value              |
 |----------------------|----------------------------|----------------------------|
-| `-Client`            | generate client code       | unset (`false`)            |
-| `-Server`            | generate server code       | unset (`false`)            |
+| `-client`            | generate client code       | unset (`false`)            |
+| `-server`            | generate server code       | unset (`false`)            |
 
 ## LICENSE
 
