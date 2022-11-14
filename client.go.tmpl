@@ -33,8 +33,7 @@ export class {{.Name}} implements {{.Name}} {
     ).then((res) => {
       return buildResponse(res).then(_data => {
         return {
-        {{range $i, $output := .Outputs -}}
-          {{if gt $i 0}}, {{end}}
+        {{- range $i, $output := .Outputs -}}{{if gt $i 0}}, {{end}}
           {{$output.Name}}: <{{template "type" dict "Type" $output.Type "TypeMap" $typeMap}}>(_data.{{$output.Name}})
         {{- end}}
         }
