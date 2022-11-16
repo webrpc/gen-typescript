@@ -1,9 +1,6 @@
 import { ExampleService } from './client.gen'
 
-const exampleService = new ExampleService(
-	'http://localhost:3000',
-	(input, init) => fetch(input, init)
-)
+const exampleService = new ExampleService('http://localhost:3000', fetch)
 
 document.addEventListener('DOMContentLoaded', () => {
 	const pingButton = document.getElementById('js-ping-btn')
