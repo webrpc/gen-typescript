@@ -23,8 +23,8 @@ export enum {{$enumName}} {
 export interface {{.Name}} {
   {{- range .Fields}}
   {{- $isExportable := true -}}
-  {{- range $meta := .Meta -}} 
-      {{- if eq (get $meta "json") "-" -}}
+  {{- range $meta := .Meta -}}
+      {{- if eq (printf "%v" (get $meta "json")) "-" -}}
         {{- $isExportable = false}}
       {{- end -}}
   {{- end }}
