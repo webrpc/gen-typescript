@@ -4,21 +4,21 @@
 {{- $type := .Type -}}
 {{- $typeMap := .TypeMap -}}
 
-{{- if isMapType .Type -}}
+{{- if isMapType $type -}}
 
     object
 
-{{- else if isListType .Type -}}
+{{- else if isListType $type -}}
 
-    {{template "type" dict "Type" (listElemType .Type) "TypeMap" $typeMap}}[]
+    {{template "type" dict "Type" (listElemType $type) "TypeMap" $typeMap}}[]
 
-{{- else if isStructType .Type -}}
+{{- else if isStructType $type -}}
 
-    {{.Type}}
+    {{$type}}
 
-{{- else -}}
+{{- else if isCoreType $type -}}
 
-    {{ get $typeMap .Type }}
+    {{ get $typeMap $type }}
 
 {{- end -}}
 {{- end -}}

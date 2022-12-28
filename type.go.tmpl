@@ -3,21 +3,22 @@
 {{- $type := .Type -}}
 {{- $typeMap := .TypeMap -}}
 
-{{- if isMapType .Type -}}
+{{- if isMapType $type -}}
 
     {[key: {{template "type" dict "Type" (mapKeyType $type) "TypeMap" $typeMap}}]: {{template "type" dict "Type" (mapValueType $type) "TypeMap" $typeMap}}}
 
-{{- else if isListType .Type -}}
+{{- else if isListType $type -}}
 
-    Array<{{template "type" dict "Type" (listElemType .Type) "TypeMap" $typeMap}}>
+    Array<{{template "type" dict "Type" (listElemType $type) "TypeMap" $typeMap}}>
 
-{{- else if isStructType .Type -}}
 
-    {{.Type}}
+{{- else if isCoreType $type -}}
+
+    {{get $typeMap $type}}
 
 {{- else -}}
 
-    {{ get $typeMap .Type }}
+    {{$type}}
 
 {{- end -}}
 {{- end -}}

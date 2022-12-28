@@ -30,7 +30,7 @@
   {{- exit 1 -}}
 {{- end -}}
 
-{{- /* Map webrpc data types to JS. */ -}}
+{{- /* Map webrpc core types to JS. */ -}}
 {{- $typeMap := dict }}
 {{- set $typeMap "null" "null" -}}
 {{- set $typeMap "any" "any" -}}
@@ -67,7 +67,7 @@ export const WebRPCSchemaVersion = "{{.SchemaVersion}}"
 // Schema hash generated from your RIDL schema
 export const WebRPCSchemaHash = "{{.SchemaHash}}"
 
-{{template "types" dict "Messages" .Messages "Services" .Services "TypeMap" $typeMap}}
+{{template "types" dict "Types" .Types "Services" .Services "TypeMap" $typeMap}}
 
 {{- if $opts.client}}
   {{template "client" dict "Services" .Services "TypeMap" $typeMap}}
@@ -76,7 +76,7 @@ export const WebRPCSchemaHash = "{{.SchemaHash}}"
 
 {{- if $opts.server}}
   {{template "server" dict "Services" .Services "Opts" $opts "TypeMap" $typeMap}}
-  {{template "server_helpers" dict "Messages" .Messages "TypeMap" $typeMap}}
+  {{template "server_helpers" dict "Types" .Types "TypeMap" $typeMap}}
 {{- end}}
 
 {{- end}}
