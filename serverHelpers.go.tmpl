@@ -1,4 +1,4 @@
-{{ define "server_helpers" }}
+{{ define "serverHelpers" }}
 {{- $types := .Types -}}
 {{- $typeMap := .TypeMap }}
 
@@ -17,11 +17,11 @@ const JS_TYPES = [
     const validate{{ $type.Name }} = (value: any) => {
         {{ range $_, $field := $type.Fields }}
             {{ if $field.Optional }}
-                if ("{{template "fieldName" dict "Field" $field }}" in value && !validateType(value["{{template "fieldName" dict "Field" $field }}"], "{{template "jsType" dict "Type" (coalesce $field.Type $type) "TypeMap" $typeMap}}")) {
+                if ("{{template "fieldName" dict "Field" $field }}" in value && !validateType(value["{{template "fieldName" dict "Field" $field }}"], "{{template "jsType" dict "Type" (coalesce $field.Type $type.Type) "TypeMap" $typeMap}}")) {
                     return false
                 }
             {{ else }}
-                if (!("{{template "fieldName" dict "Field" $field }}" in value) || !validateType(value["{{template "fieldName" dict "Field" $field }}"], "{{template "jsType" dict "Type" (coalesce $field.Type $type) "TypeMap" $typeMap}}")) {
+                if (!("{{template "fieldName" dict "Field" $field }}" in value) || !validateType(value["{{template "fieldName" dict "Field" $field }}"], "{{template "jsType" dict "Type" (coalesce $field.Type $type.Type) "TypeMap" $typeMap}}")) {
                     return false
                 }
             {{ end }}
