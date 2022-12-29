@@ -9,6 +9,32 @@ on:
       - "**"
 
 jobs:
+  test-client:
+    strategy:
+      matrix:
+        webrpc-gen: [v0.9.1]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: |
+          cd tests/
+          npm install
+      - name: Add webrpc binaries to path
+        run: |
+          mkdir -p bin
+          curl -L -o webrpc-test https://github.com/webrpc/webrpc/releases/download/${{ matrix.webrpc-gen }}/webrpc-test.linux-amd64
+          curl -L -o webrpc-gen https://github.com/webrpc/webrpc/releases/download/${{ matrix.webrpc-gen }}/webrpc-gen.linux-amd64
+          chmod +x webrpc-test
+          chmod +x webrpc-gen
+          mv -t bin/ webrpc-test webrpc-gen
+          echo "$(pwd)/bin/" >> $GITHUB_PATH
+      - name: Run tests
+        run: |
+          VERSION=${{ matrix.webrpc-gen }} make test
   test:
     runs-on: ubuntu-latest
     steps:

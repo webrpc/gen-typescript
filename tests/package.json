@@ -1,0 +1,25 @@
+{
+  "name": "gen-typescript",
+  "version": "1.0.0",
+  "description": "Typescript generator",
+  "main": "index.js",
+  "scripts": {
+    "test": "./node_modules/.bin/vitest run --reporter verbose --dir ./"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/webrpc/gen-typescript.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/webrpc/gen-typescript/issues"
+  },
+  "homepage": "https://github.com/webrpc/gen-typescript#readme",
+  "devDependencies": {
+    "vitest": "^0.25.6"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
