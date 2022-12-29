@@ -1,4 +1,3 @@
-VERSION ?= v0.8.3
 PORT = 9988
 
 define test
