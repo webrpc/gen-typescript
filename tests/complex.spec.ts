@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {ComplexApi} from "../src/client";
+import {ComplexApi} from "./client";
 
 describe('Test complex rpc server', () => {
   it('It should get the complex data and send it back with no error', async () => {

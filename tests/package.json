@@ -4,7 +4,7 @@
   "description": "Typescript generator",
   "main": "index.js",
   "scripts": {
-    "test": "vitest"
+    "test": "./node_modules/.bin/vitest run --reporter verbose --dir ./"
   },
   "repository": {
     "type": "git",
