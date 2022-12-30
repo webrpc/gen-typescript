@@ -30,7 +30,7 @@ jobs:
   webrpc-interoperability:
     strategy:
       matrix:
-        webrpc-version: [v0.9.1]
+        webrpc-version: [v0.10.0]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
