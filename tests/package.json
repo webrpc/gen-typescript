@@ -1,10 +1,11 @@
 {
-  "name": "gen-typescript",
+  "name": "gen-typescript-test",
   "version": "1.0.0",
-  "description": "Typescript generator",
+  "description": "Webrpc TypeScript generator test",
   "main": "index.js",
   "scripts": {
-    "test": "./node_modules/.bin/vitest run --reporter verbose --dir ./"
+    "test": "./test.sh",
+    "vitest": "./node_modules/.bin/vitest run --reporter verbose --dir ./"
   },
   "repository": {
     "type": "git",
