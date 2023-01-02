@@ -12,6 +12,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
       - name: Install webrpc-gen
         run: |
           curl -o ./webrpc-gen -fLJO https://github.com/webrpc/webrpc/releases/download/v0.10.0/webrpc-gen.linux-amd64
