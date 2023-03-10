@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { TestApi } from "./client";
+import { TestApi, WebrpcError } from "./client";
+
+const testApiClient = new TestApi(
+  `http://localhost:${process.env.PORT}`,
+  fetch
+);
 
 describe("Test interoperability with webrpc-test reference server", () => {
-  const testApiClient = new TestApi(
-    `http://localhost:${process.env.PORT}`,
-    fetch
-  );
-
   it("getEmpty() should get empty type successfully", async () => {
     await expect(testApiClient.getEmpty()).resolves.not.toThrowError();
   });
@@ -34,5 +34,138 @@ describe("Test interoperability with webrpc-test reference server", () => {
     await expect(
       testApiClient.sendComplex(complex, {})
     ).resolves.not.toThrowError();
+  });
+});
+
+describe("Test custom webrpc schema errors", () => {
+  const tt = [
+    {
+      code: 0,
+      name: "WebrpcServerError",
+      msg: "server error",
+      httpStatusCode: 400,
+    },
+    {
+      code: 1,
+      name: "Unauthorized",
+      msg: "unauthorized",
+      httpStatusCode: 401,
+    },
+    {
+      code: 2,
+      name: "ExpiredToken",
+      msg: "expired token",
+      httpStatusCode: 401,
+    },
+    {
+      code: 3,
+      name: "InvalidToken",
+      msg: "invalid token",
+      httpStatusCode: 401,
+    },
+    {
+      code: 4,
+      name: "Deactivated",
+      msg: "account deactivated",
+      httpStatusCode: 403,
+    },
+    {
+      code: 5,
+      name: "ConfirmAccount",
+      msg: "confirm your email",
+      httpStatusCode: 403,
+    },
+    {
+      code: 6,
+      name: "AccessDenied",
+      msg: "access denied",
+      httpStatusCode: 403,
+    },
+    {
+      code: 7,
+      name: "MissingArgument",
+      msg: "missing argument",
+      httpStatusCode: 400,
+    },
+    {
+      code: 8,
+      name: "UnexpectedValue",
+      msg: "unexpected value",
+      httpStatusCode: 400,
+    },
+    {
+      code: 100,
+      name: "RateLimited",
+      msg: "too many requests",
+      httpStatusCode: 429,
+    },
+    {
+      code: 101,
+      name: "DatabaseDown",
+      msg: "service outage",
+      httpStatusCode: 503,
+    },
+    {
+      code: 102,
+      name: "ElasticDown",
+      msg: "search is degraded",
+      httpStatusCode: 503,
+    },
+    {
+      code: 103,
+      name: "NotImplemented",
+      msg: "not implemented",
+      httpStatusCode: 501,
+    },
+    {
+      code: 200,
+      name: "UserNotFound",
+      msg: "user not found",
+      httpStatusCode: 400,
+    },
+    { code: 201, name: "UserBusy", msg: "user busy", httpStatusCode: 400 },
+    {
+      code: 202,
+      name: "InvalidUsername",
+      msg: "invalid username",
+      httpStatusCode: 400,
+    },
+    {
+      code: 300,
+      name: "FileTooBig",
+      msg: "file is too big (max 1GB)",
+      httpStatusCode: 400,
+    },
+    {
+      code: 301,
+      name: "FileInfected",
+      msg: "file is infected",
+      httpStatusCode: 400,
+    },
+    {
+      code: 302,
+      name: "FileType",
+      msg: "unsupported file type",
+      httpStatusCode: 400,
+    },
+  ];
+
+  tt.forEach((tc) => {
+    it(`getSchemaError({code: ${tc.code}}) should throw WebrpcError ${tc.code} ${tc.name}`, async () => {
+      try {
+        const resp = await testApiClient.getSchemaError({ code: tc.code });
+        expect(resp, "expected to throw error").toBeUndefined();
+      } catch (e) {
+        console.error(e);
+        expect(e).instanceOf(WebrpcError);
+
+        if (e instanceof WebrpcError) {
+          expect(e).toHaveProperty("code", tc.code);
+          expect(e).toHaveProperty("error", tc.name);
+          expect(e).toHaveProperty("msg", tc.msg);
+          expect(e).toHaveProperty("status", tc.httpStatusCode);
+        }
+      }
+    });
   });
 });
