@@ -1,19 +1,4 @@
 {{define "clientHelpers"}}
-interface WebrpcErrorOptions {
-  code: number;
-  error: string;
-  msg: string;
-  status: number;
-  cause?: string;
-}
-
-export class WebrpcError extends Error {
-  constructor(message: string, public options: WebrpcErrorOptions) {
-    super(message);
-    Object.setPrototypeOf(this, WebrpcError.prototype);
-  }
-}
-
 const createHTTPRequest = (body: object = {}, headers: object = {}): object => {
   return {
     method: 'POST',
@@ -28,13 +13,69 @@ const buildResponse = (res: Response): Promise<any> => {
     try {
       data = JSON.parse(text)
     } catch(err) {
-      throw new WebrpcError("bad response", { code: -5, error: 'WebrpcBadResponse', status: res.status, cause: new Error(`expecting JSON, got: ${text}`)})
+      throw new WebrpcError('WebrpcBadResponse', res.status, `expected JSON object but got: '${text}'`)
     }
     if (!res.ok) {
-      throw new WebrpcError(data.msg, { code: data.code || 0, error: data.error || 'WebrpcServerError', status: res.status, cause: data.cause ? new Error(data.cause): undefined })
+      if (data.code && typeof data.code === 'number') {
+        const err = rpcErrorsByCode[data.code] as any
+        if (err && err.throwError) {
+          err.throwError(data)
+        }
+      }
+      if (data.message) {
+        WebrpcError.throwError(data)
+      } else {
+        throw data // unknown payload
+      }
     }
     return data
   })
+}
+
+//
+// Errors
+//
+
+export class WebrpcError extends Error {
+  name: string
+  code: number
+  message: string
+  cause?: string
+
+  constructor(name: string, code: number, message: string, cause?: string) {
+    super(message)
+    this.name = name || 'WebrpcError'
+    this.code = code || 0
+    this.message = message
+    this.cause = cause
+    Object.setPrototypeOf(this, WebrpcError.prototype)
+  }
+
+  static throwError(payload: any) {
+    throw new this(payload.error, payload.code, payload.message, payload.cause)
+  }
+}
+
+export class UserNotFoundError extends WebrpcError {
+  constructor(
+    name: string = 'UserNotFoundError',
+    code: number = 403001,
+    message: string = 'user not found',
+    cause?: string
+  ) {
+    super(name, code, message, cause)
+    Object.setPrototypeOf(this, UserNotFoundError.prototype)
+  }
+}
+
+export enum errors {
+  WebrpcError = 'WebrpcError',
+  UserNotFoundError = 'UserNotFoundError'
+}
+
+const rpcErrorsByCode: { [code: number]: any } = {
+  0: WebrpcError,
+  403001: UserNotFoundError
 }
 
 export type Fetch = (input: RequestInfo, init?: RequestInit) => Promise<Response>
