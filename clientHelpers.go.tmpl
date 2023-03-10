@@ -1,8 +1,17 @@
 {{define "clientHelpers"}}
-export interface WebRPCError extends Error {
-  code: string
-  msg: string
-	status: number
+interface WebrpcErrorOptions {
+  code: number;
+  error: string;
+  msg: string;
+  status: number;
+  cause?: string;
+}
+
+export class WebrpcError extends Error {
+  constructor(message: string, public options: WebrpcErrorOptions) {
+    super(message);
+    Object.setPrototypeOf(this, WebrpcError.prototype);
+  }
 }
 
 const createHTTPRequest = (body: object = {}, headers: object = {}): object => {
@@ -19,10 +28,10 @@ const buildResponse = (res: Response): Promise<any> => {
     try {
       data = JSON.parse(text)
     } catch(err) {
-      throw { code: 'unknown', msg: `expecting JSON, got: ${text}`, status: res.status } as WebRPCError
+      throw new WebrpcError("bad response", { code: -5, error: 'WebrpcBadResponse', status: res.status, cause: new Error(`expecting JSON, got: ${text}`)})
     }
     if (!res.ok) {
-      throw data // webrpc error response
+      throw new WebrpcError(data.msg, { code: data.code || 0, error: data.error || 'WebrpcServerError', status: res.status, cause: data.cause ? new Error(data.cause): undefined })
     }
     return data
   })

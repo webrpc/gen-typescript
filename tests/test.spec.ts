@@ -156,14 +156,13 @@ describe("Test custom webrpc schema errors", () => {
         const resp = await testApiClient.getSchemaError({ code: tc.code });
         expect(resp, "expected to throw error").toBeUndefined();
       } catch (e) {
-        console.error(e);
         expect(e).instanceOf(WebrpcError);
 
         if (e instanceof WebrpcError) {
-          expect(e).toHaveProperty("code", tc.code);
-          expect(e).toHaveProperty("error", tc.name);
-          expect(e).toHaveProperty("msg", tc.msg);
-          expect(e).toHaveProperty("status", tc.httpStatusCode);
+          expect(e.message).toBe(tc.msg);
+          expect(e.options.code).toBe(tc.code);
+          expect(e.options.error).toBe(tc.name);
+          expect(e.options.status).toBe(tc.httpStatusCode);
         }
       }
     });
