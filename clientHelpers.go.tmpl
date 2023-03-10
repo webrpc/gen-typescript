@@ -1,4 +1,7 @@
 {{define "clientHelpers"}}
+{{- $webrpcErrors := .WebrpcErrors -}}
+{{- $schemaErrors := .SchemaErrors -}}
+
 const createHTTPRequest = (body: object = {}, headers: object = {}): object => {
   return {
     method: 'POST',
@@ -56,26 +59,53 @@ export class WebrpcError extends Error {
   }
 }
 
-export class UserNotFoundError extends WebrpcError {
+// Webrpc errors
+{{- range $_, $error := $webrpcErrors}}
+export class {{$error.Name}}Error extends WebrpcError {
   constructor(
-    name: string = 'UserNotFoundError',
-    code: number = 403001,
-    message: string = 'user not found',
+    name: string = '{{$error.Name}}',
+    code: number = {{$error.Code}},
+    message: string = '{{$error.Message}}',
     cause?: string
   ) {
     super(name, code, message, cause)
-    Object.setPrototypeOf(this, UserNotFoundError.prototype)
+    Object.setPrototypeOf(this, {{$error.Name}}Error.prototype)
+  }
+}
+{{ end }}
+
+// Schema errors
+{{- range $_, $error := $schemaErrors}}
+export class {{$error.Name}}Error extends WebrpcError {
+  constructor(
+    name: string = '{{$error.Name}}',
+    code: number = {{$error.Code}},
+    message: string = '{{$error.Message}}',
+    cause?: string
+  ) {
+    super(name, code, message, cause)
+    Object.setPrototypeOf(this, {{$error.Name}}Error.prototype)
   }
 }
 
+{{ end -}}
+
 export enum errors {
-  WebrpcError = 'WebrpcError',
-  UserNotFoundError = 'UserNotFoundError'
+{{- range $_, $error := $webrpcErrors}}
+  {{$error.Name}} = '{{$error.Name}}',
+{{- end}}
+{{- range $_, $error := $schemaErrors}}
+  {{$error.Name}} = '{{$error.Name}}',
+{{- end}}
 }
 
 const rpcErrorsByCode: { [code: number]: any } = {
-  0: WebrpcError,
-  403001: UserNotFoundError
+{{- range $_, $error := $webrpcErrors}}
+  '{{$error.Code}}': {{$error.Name}}Error,
+{{- end }}
+{{- range $_, $error := $schemaErrors}}
+  '{{$error.Code}}': {{$error.Name}}Error,
+{{- end }}
 }
 
 export type Fetch = (input: RequestInfo, init?: RequestInit) => Promise<Response>

@@ -41,8 +41,8 @@ describe("Test custom webrpc schema errors", () => {
   const tt = [
     {
       code: 0,
-      name: "WebrpcServerError",
-      msg: "server error",
+      name: "WebrpcEndpoint",
+      msg: "endpoint error",
       httpStatusCode: 400,
     },
     {
@@ -151,7 +151,7 @@ describe("Test custom webrpc schema errors", () => {
   ];
 
   tt.forEach((tc) => {
-    it(`getSchemaError({code: ${tc.code}}) should throw WebrpcError ${tc.code} ${tc.name}`, async () => {
+    it(`getSchemaError({code: ${tc.code}}) should throw ${tc.name}Error`, async () => {
       try {
         const resp = await testApiClient.getSchemaError({ code: tc.code });
         expect(resp, "expected to throw error").toBeUndefined();
@@ -164,7 +164,6 @@ describe("Test custom webrpc schema errors", () => {
           expect(e.message).toBe(tc.msg);
           expect(e.code).toBe(tc.code);
           expect(e.name).toBe(tc.name);
-          //expect(e.status).toBe(tc.httpStatusCode);
         }
       }
     });
