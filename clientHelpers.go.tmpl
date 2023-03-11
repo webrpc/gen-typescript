@@ -90,8 +90,7 @@ export class {{$error.Name}}Error extends WebrpcError {
     Object.setPrototypeOf(this, {{$error.Name}}Error.prototype)
   }
 }
-
-{{ end -}}
+{{ end }}
 
 export enum errors {
 {{- range $_, $error := $webrpcErrors}}
@@ -104,10 +103,10 @@ export enum errors {
 
 const webrpcErrorByCode: { [code: number]: any } = {
 {{- range $_, $error := $webrpcErrors}}
-  '{{$error.Code}}': {{$error.Name}}Error,
+  [{{$error.Code}}]: {{$error.Name}}Error,
 {{- end }}
 {{- range $_, $error := $schemaErrors}}
-  '{{$error.Code}}': {{$error.Name}}Error,
+  [{{$error.Code}}]: {{$error.Name}}Error,
 {{- end }}
 }
 
