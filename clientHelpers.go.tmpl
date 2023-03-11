@@ -61,7 +61,7 @@ export class WebrpcError extends Error {
 }
 
 // Webrpc errors
-{{- range $_, $error := $webrpcErrors}}
+{{ range $_, $error := $webrpcErrors}}
 export class {{$error.Name}}Error extends WebrpcError {
   constructor(
     name: string = '{{$error.Name}}',
@@ -77,7 +77,7 @@ export class {{$error.Name}}Error extends WebrpcError {
 {{ end }}
 
 // Schema errors
-{{- range $_, $error := $schemaErrors}}
+{{ range $_, $error := $schemaErrors}}
 export class {{$error.Name}}Error extends WebrpcError {
   constructor(
     name: string = '{{$error.Name}}',
