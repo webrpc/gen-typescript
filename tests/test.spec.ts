@@ -67,6 +67,7 @@ describe("Test custom webrpc schema errors", () => {
       msg: "endpoint error",
       errClass: WebrpcEndpointError,
       httpStatusCode: 400,
+      cause: "failed to read file: unexpected EOF",
     },
     {
       code: 1,
@@ -74,6 +75,7 @@ describe("Test custom webrpc schema errors", () => {
       msg: "unauthorized",
       errClass: UnauthorizedError,
       httpStatusCode: 401,
+      cause: "failed to verify JWT token",
     },
     {
       code: 2,
@@ -130,6 +132,7 @@ describe("Test custom webrpc schema errors", () => {
       msg: "too many requests",
       errClass: RateLimitedError,
       httpStatusCode: 429,
+      cause: "1000 req/min exceeded",
     },
     {
       code: 101,
@@ -193,6 +196,7 @@ describe("Test custom webrpc schema errors", () => {
       msg: "unsupported file type",
       errClass: FileTypeError,
       httpStatusCode: 400,
+      cause: ".wav is not supported",
     },
   ];
 
@@ -211,6 +215,7 @@ describe("Test custom webrpc schema errors", () => {
           expect(e.message).toBe(tc.msg);
           expect(e.code).toBe(tc.code);
           expect(e.name).toBe(tc.name);
+          expect(e.cause).toBe(tc.cause);
         }
       }
     });
