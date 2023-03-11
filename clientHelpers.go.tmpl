@@ -22,7 +22,7 @@ const buildResponse = (res: Response): Promise<any> => {
       )
     }
     if (!res.ok) {
-      const code: number = (data.hasOwnProperty('code') && typeof data.code === 'number') ? data.code : 0
+      const code: number = (typeof data.code === 'number') ? data.code : 0
       const err = webrpcErrorByCode[code] || WebrpcError
       err.throwError(data)
     }
