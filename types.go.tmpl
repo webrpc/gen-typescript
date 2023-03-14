@@ -11,7 +11,7 @@
 {{if $types -}}
 {{range $_i, $type := $types -}}
 
-{{if isEnumType $type -}}
+{{if isEnumType $type }}
 export enum {{$type.Name}} {
 {{- range $i, $field := $type.Fields}}
   {{- if $i}},{{end}}
@@ -31,7 +31,9 @@ export interface {{$type.Name}} {
       {{- end -}}
     {{- end -}}
   {{- end }}
-  {{if $isExportable -}}{{template "fieldName" dict "Field" .}}{{if .Optional}}?{{end}}: {{template "type" dict "Type" $field.Type "TypeMap" $typeMap}}{{- end -}}
+  {{- if $isExportable }}
+  {{template "fieldName" dict "Field" .}}{{if .Optional}}?{{end}}: {{template "type" dict "Type" $field.Type "TypeMap" $typeMap}}
+  {{- end -}}
   {{- end}}
 }
 {{end -}}
