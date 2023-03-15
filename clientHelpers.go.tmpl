@@ -1,9 +1,6 @@
 {{define "clientHelpers"}}
-export interface WebRPCError extends Error {
-  code: string
-  msg: string
-	status: number
-}
+{{- $webrpcErrors := .WebrpcErrors -}}
+{{- $schemaErrors := .SchemaErrors -}}
 
 const createHTTPRequest = (body: object = {}, headers: object = {}): object => {
   return {
@@ -18,14 +15,99 @@ const buildResponse = (res: Response): Promise<any> => {
     let data
     try {
       data = JSON.parse(text)
-    } catch(err) {
-      throw { code: 'unknown', msg: `expecting JSON, got: ${text}`, status: res.status } as WebRPCError
+    } catch(e) {
+      WebrpcBadResponseError.throwError({
+        status: res.status,
+        cause: `JSON.parse(): ${e.message}: response text: ${text}`},
+      )
     }
     if (!res.ok) {
-      throw data // webrpc error response
+      const code: number = (typeof data.code === 'number') ? data.code : 0
+      const err = webrpcErrorByCode[code] || WebrpcError
+      err.throwError(data)
     }
     return data
   })
+}
+
+//
+// Errors
+//
+
+export class WebrpcError extends Error {
+  name: string
+  code: number
+  message: string
+  status: number
+  cause?: string
+
+  /** @deprecated Use message instead of msg. Deprecated in webrpc v0.11.0. */
+  msg: string
+
+  constructor(name: string, code: number, message: string, status: number, cause?: string) {
+    super(message)
+    this.name = name || 'WebrpcError'
+    this.code = typeof code === 'number' ? code : 0
+    this.message = message || `endpoint error ${this.code}`
+    this.msg = this.message
+    this.status = typeof status === 'number' ? status : 0
+    this.cause = cause
+    Object.setPrototypeOf(this, WebrpcError.prototype)
+  }
+
+  static throwError(payload: any) {
+    throw new this(payload.error, payload.code, payload.message || payload.msg, payload.status, payload.cause)
+  }
+}
+
+// Webrpc errors
+{{ range $_, $error := $webrpcErrors}}
+export class {{$error.Name}}Error extends WebrpcError {
+  constructor(
+    name: string = '{{$error.Name}}',
+    code: number = {{$error.Code}},
+    message: string = '{{$error.Message}}',
+    status: number = 0,
+    cause?: string
+  ) {
+    super(name, code, message, status, cause)
+    Object.setPrototypeOf(this, {{$error.Name}}Error.prototype)
+  }
+}
+{{ end }}
+
+// Schema errors
+{{ range $_, $error := $schemaErrors}}
+export class {{$error.Name}}Error extends WebrpcError {
+  constructor(
+    name: string = '{{$error.Name}}',
+    code: number = {{$error.Code}},
+    message: string = '{{$error.Message}}',
+    status: number = 0,
+    cause?: string
+  ) {
+    super(name, code, message, status, cause)
+    Object.setPrototypeOf(this, {{$error.Name}}Error.prototype)
+  }
+}
+{{ end }}
+
+export enum errors {
+{{- range $_, $error := $webrpcErrors}}
+  {{$error.Name}} = '{{$error.Name}}',
+{{- end}}
+{{- range $_, $error := $schemaErrors}}
+  {{$error.Name}} = '{{$error.Name}}',
+{{- end}}
+}
+
+const webrpcErrorByCode: { [code: number]: any } = {
+{{- range $_, $error := $webrpcErrors}}
+  [{{$error.Code}}]: {{$error.Name}}Error,
+{{- end }}
+{{- range $_, $error := $schemaErrors}}
+  [{{$error.Code}}]: {{$error.Name}}Error,
+{{- end }}
 }
 
 export type Fetch = (input: RequestInfo, init?: RequestInit) => Promise<Response>
