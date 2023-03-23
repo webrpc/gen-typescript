@@ -29,15 +29,18 @@ export class {{.Name}} implements {{.Name}} {
       createHTTPRequest(args, headers)
       {{- else}}
       createHTTPRequest({}, headers)
-      {{end -}}
+      {{- end}}
     ).then((res) => {
       return buildResponse(res).then(_data => {
         return {
-        {{- range $i, $output := .Outputs -}}{{if gt $i 0}}, {{end}}
-          {{$output.Name}}: <{{template "type" dict "Type" $output.Type "TypeMap" $typeMap}}>(_data.{{$output.Name}})
-        {{- end}}
-        }
+        {{- range $i, $output := .Outputs }}
+          {{$output.Name}}: <{{template "type" dict "Type" $output.Type "TypeMap" $typeMap}}>(_data.{{$output.Name}}),
+        {{- end -}}
+        {{if len .Outputs}}
+        {{end}}}
       })
+    }, (error) => {
+      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
     })
   }
   {{end}}
