@@ -1,4 +1,4 @@
-import { ExampleService } from './client.gen'
+import { ExampleService, WebrpcError } from './client.gen'
 
 const exampleService = new ExampleService('http://localhost:3000', fetch)
 
@@ -15,12 +15,13 @@ document.addEventListener('DOMContentLoaded', () => {
 		exampleService
 			.ping({})
 			.then(({}) => {
-				console.log('ping() responded:', {})
 				pingText.textContent = 'PONG'
 			})
-			.catch((e) => {
-				console.log('ping() failed:', e)
-				pingText.textContent = 'ping() failed: ' + e.message
+			.catch((error) => {
+				if (error as WebrpcError) {
+					console.error(error)
+					pingText.textContent = `error: ${error.message}, cause: ${error.cause}`
+				}
 			})
 	})
 })
@@ -43,9 +44,11 @@ document.addEventListener('DOMContentLoaded', () => {
 				console.log('getUser() responded with:', { user })
 				usernameText.textContent = user.USERNAME
 			})
-			.catch((e) => {
-				console.log('getUser() failed:', e)
-				usernameText.textContent = 'getUser() failed: ' + e.message
+			.catch((error) => {
+				if (error as WebrpcError) {
+					console.error(error)
+					usernameText.textContent = `error: ${error.message}, cause: ${error.cause}`
+				}
 			})
 	})
 })
