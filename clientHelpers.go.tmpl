@@ -2,11 +2,12 @@
 {{- $webrpcErrors := .WebrpcErrors -}}
 {{- $schemaErrors := .SchemaErrors -}}
 
-const createHTTPRequest = (body: object = {}, headers: object = {}): object => {
+const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
   return {
     method: 'POST',
     headers: { ...headers, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body || {})
+    body: JSON.stringify(body || {}),
+    signal
   }
 }
 
@@ -109,5 +110,5 @@ const webrpcErrorByCode: { [code: number]: any } = {
 {{- end }}
 }
 
-export type Fetch = (input: RequestInfo, init?: RequestInit) => Promise<Response>
+export type Fetch = (input: RequestInfo, init?: RequestInit, abortSignal?: AbortSignal) => Promise<Response>
 {{end}}
