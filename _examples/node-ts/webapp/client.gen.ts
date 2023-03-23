@@ -279,4 +279,4 @@ const webrpcErrorByCode: { [code: number]: any } = {
   [-6]: WebrpcServerPanicError,
 }
 
-export type Fetch = (input: RequestInfo, init?: RequestInit, abortSignal?: AbortSignal) => Promise<Response>
+export type Fetch = (input: RequestInfo, init?: RequestInit) => Promise<Response>
