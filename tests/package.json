@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "./test.sh",
-    "vitest": "./node_modules/.bin/vitest run --reporter verbose --dir ./"
+    "vitest": "./node_modules/.bin/vitest run --reporter verbose --dir ./",
+    "ts-check": "tsc --noEmit ./client.ts"
   },
   "repository": {
     "type": "git",
@@ -18,6 +19,8 @@
   },
   "homepage": "https://github.com/webrpc/gen-typescript#readme",
   "devDependencies": {
+    "tsc": "^2.0.4",
+    "typescript": "^5.1.6",
     "vitest": "^0.25.6"
   },
   "engines": {

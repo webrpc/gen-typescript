@@ -14,3 +14,4 @@ webrpc-test -server -port=$PORT -timeout=5s &
 for (( i=0; i<100; i++ )); do nc -z localhost $PORT && break || sleep 0.1; done
 
 npm run vitest
+npm run ts-check
