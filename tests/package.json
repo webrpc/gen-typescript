@@ -6,6 +6,7 @@
   "scripts": {
     "test": "./test.sh",
     "vitest": "./node_modules/.bin/vitest run --reporter verbose --dir ./",
+    "prets-check": "webrpc-gen -schema=./test.ridl -target=../ -client -out=./client.ts",
     "ts-check": "tsc --noEmit ./client.ts"
   },
   "repository": {
