@@ -20,7 +20,6 @@
   },
   "homepage": "https://github.com/webrpc/gen-typescript#readme",
   "devDependencies": {
-    "tsc": "^2.0.4",
     "typescript": "^5.1.6",
     "vitest": "^0.25.6"
   },
