@@ -14,46 +14,47 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install webrpc-gen
-        run: |
-          curl -o ./webrpc-gen -fLJO https://github.com/webrpc/webrpc/releases/download/v0.11.0/webrpc-gen.linux-amd64
-          chmod +x ./webrpc-gen
-          echo $PWD >> $GITHUB_PATH
+      # - name: Install webrpc-gen
+      #   run: |
+      #     curl -o ./webrpc-gen -fLJO https://github.com/webrpc/webrpc/releases/download/v0.13.0/webrpc-gen.linux-amd64
+      #     chmod +x ./webrpc-gen
+      #     echo $PWD >> $GITHUB_PATH
 
-      # - name: Set up Go
-      #   uses: actions/setup-go@v3
-      #   with:
-      #     go-version: "1.20"
-      # - name: Install webrpc-gen (development)
-      #   run: git clone --single-branch https://github.com/webrpc/webrpc.git --branch master && cd webrpc && make install
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.20"
+      - name: Install webrpc-gen (development)
+        run: git clone --single-branch https://github.com/webrpc/webrpc.git --branch master && cd webrpc && make install
 
       - name: Regenerate examples
         run: cd _examples && make generate
       - name: Git diff of regenerated files
         run: cd _examples && make diff
 
-  webrpc-tests:
-    strategy:
-      matrix:
-        webrpc-version: [v0.11.0]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-      - name: Set up webrpc binary cache folder
-        uses: actions/cache@v3
-        with:
-          key: webrpc-binaries
-          path: tests/bin
-      - name: Install dependencies
-        run: cd tests && npm install
-      - name: Download webrpc binaries
-        run: cd tests && ./download.sh ${{ matrix.webrpc-version }} bin/${{ matrix.webrpc-version }}
-      - name: Export path of webrpc binaries
-        run: cd tests && echo "$PWD/bin/${{ matrix.webrpc-version }}" >> $GITHUB_PATH
-      - name: Run interoperability tests
-        run: cd tests && ./test.sh
-      - name: Run typescript check
-        run: cd tests && npm run ts-check
+  # TODO: Re-enable after webrpc@v0.13.0 is released
+  # webrpc-tests:
+  #   strategy:
+  #     matrix:
+  #       webrpc-version: [v0.13.0]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version: 18
+  #     - name: Set up webrpc binary cache folder
+  #       uses: actions/cache@v3
+  #       with:
+  #         key: webrpc-binaries
+  #         path: tests/bin
+  #     - name: Install dependencies
+  #       run: cd tests && npm install
+  #     - name: Download webrpc binaries
+  #       run: cd tests && ./download.sh ${{ matrix.webrpc-version }} bin/${{ matrix.webrpc-version }}
+  #     - name: Export path of webrpc binaries
+  #       run: cd tests && echo "$PWD/bin/${{ matrix.webrpc-version }}" >> $GITHUB_PATH
+  #     - name: Run interoperability tests
+  #       run: cd tests && ./test.sh
+  #     - name: Run typescript check
+  #       run: cd tests && npm run ts-check

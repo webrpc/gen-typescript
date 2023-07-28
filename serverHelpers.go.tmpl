@@ -14,21 +14,29 @@ const JS_TYPES = [
 ]
 
 {{ range $_, $type := $types }}
-    const validate{{ $type.Name }} = (value: any) => {
-        {{ range $_, $field := $type.Fields }}
-            {{ if $field.Optional }}
-                if ("{{template "fieldName" dict "Field" $field }}" in value && !validateType(value["{{template "fieldName" dict "Field" $field }}"], "{{template "jsType" dict "Type" (coalesce $field.Type $type.Type) "TypeMap" $typeMap}}")) {
-                    return false
-                }
-            {{ else }}
-                if (!("{{template "fieldName" dict "Field" $field }}" in value) || !validateType(value["{{template "fieldName" dict "Field" $field }}"], "{{template "jsType" dict "Type" (coalesce $field.Type $type.Type) "TypeMap" $typeMap}}")) {
-                    return false
-                }
-            {{ end }}
-        {{ end }}
-
-        return true
+const validate{{ $type.Name }} = (value: any) => {
+{{- if isEnumType $type }}
+    {{- range $_, $enum := $type.Enums }}
+    if (!("{{$enum.Name}}" in value) || !validateType(value["{{$enum.Name}}"], "{{template "jsType" dict "Type" $type.Type "TypeMap" $typeMap}}")) {
+        return false
     }
+    {{- end }}
+{{- else -}}
+    {{- range $_, $field := $type.Fields }}
+    {{- if $field.Optional }}
+    if ("{{template "fieldName" dict "Field" $field }}" in value && !validateType(value["{{template "fieldName" dict "Field" $field }}"], "{{template "jsType" dict "Type" (coalesce $field.Type $type.Type) "TypeMap" $typeMap}}")) {
+        return false
+    }
+    {{- else }}
+    if (!("{{template "fieldName" dict "Field" $field }}" in value) || !validateType(value["{{template "fieldName" dict "Field" $field }}"], "{{template "jsType" dict "Type" (coalesce $field.Type $type.Type) "TypeMap" $typeMap}}")) {
+        return false
+    }
+    {{- end }}
+    {{- end }}
+{{- end }}
+
+    return true
+}
 {{ end }}
 
 const TYPE_VALIDATORS: { [type: string]: (value: any) => boolean } = {

@@ -13,7 +13,7 @@
 
 {{if isEnumType $type }}
 export enum {{$type.Name}} {
-{{- range $i, $field := $type.Fields}}
+{{- range $i, $field := $type.Enums}}
   {{- if $i}},{{end}}
   {{$field.Name}} = '{{$field.Name}}'
 {{- end}}
