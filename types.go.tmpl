@@ -18,6 +18,13 @@ export enum {{$type.Name}} {
   {{$field.Name}} = '{{$field.Name}}'
 {{- end}}
 }
+
+export enum {{$type.Name}}Value {
+{{- range $i, $field := $type.Fields}}
+  {{- if $i}},{{end}}
+  {{$field.Name}} = {{$field.TypeExtra.Value}}
+{{- end}}
+}
 {{end -}}
 
 {{- if isStructType $type }}
