@@ -198,6 +198,11 @@ import express from 'express'
 
   
 
+export interface WebrpcOptions {
+    headers?: HeadersInit;
+    signal?: AbortSignal;
+}
+
 const JS_TYPES = [
     "bigint",
     "boolean",
