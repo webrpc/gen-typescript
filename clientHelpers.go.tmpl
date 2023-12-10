@@ -70,7 +70,7 @@ export class {{$error.Name}}Error extends WebrpcError {
   constructor(
     name: string = '{{$error.Name}}',
     code: number = {{$error.Code}},
-    message: string = '{{$error.Message}}',
+    message: string = `{{$error.Message}}`,
     status: number = 0,
     cause?: string
   ) {
@@ -86,7 +86,7 @@ export class {{$error.Name}}Error extends WebrpcError {
   constructor(
     name: string = '{{$error.Name}}',
     code: number = {{$error.Code}},
-    message: string = '{{$error.Message}}',
+    message: string = `{{$error.Message}}`,
     status: number = 0,
     cause?: string
   ) {
