@@ -22,7 +22,7 @@ export class {{.Name}} implements {{.Name}} {
     return this.hostname + this.path + name
   }
   {{range $_, $method := .Methods}}
-  {{firstLetterToLower .Name}} = ({{template "methodInputs" dict "Method" . "TypeMap" $typeMap}}): Promise<{{$method.Name}}Return> => {
+    {{firstLetterToLower .Name}} = ({{template "methodInputs" dict "Method" . "TypeMap" $typeMap}}): Promise<{{if $method.StreamOutput}}void{{else}}{{$method.Name}}Return{{end}}> => {
     return this.fetch(
       this.url('{{.Name}}'),
       {{- if .Inputs | len}}
