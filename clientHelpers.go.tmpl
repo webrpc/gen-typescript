@@ -120,4 +120,11 @@ export interface WebrpcOptions {
   headers?: HeadersInit;
   signal?: AbortSignal;
 }
+
+export interface WebrpcStreamOptions<T> extends WebrpcOptions {
+  onMessage: (message: T) => void;
+  onError: (error: WebrpcError) => void;
+  onOpen?: () => void;
+  onClose?: () => void;
+}
 {{end}}

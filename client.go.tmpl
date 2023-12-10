@@ -30,6 +30,15 @@ export class {{.Name}} implements {{.Name}} {
       {{- else}}
       createHTTPRequest({}, options)
       {{end -}}
+      {{- if $method.StreamOutput -}}
+    ).then(
+      async(res) => {
+        await sseResponse(res, options)
+      },
+      (error) => {
+        options.onError(error)
+      })
+      {{else}}
     ).then((res) => {
       return buildResponse(res).then(_data => {
         return {
@@ -38,13 +47,15 @@ export class {{.Name}} implements {{.Name}} {
         {{- end -}}
         {{if len .Outputs}}
         {{end}}}
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+        })
+        }, (error) => {
+        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+        })
+      {{ end -}}
   }
   {{end}}
 }
 {{end -}}
 {{end -}}
-{{end}}
+  {{template "sse"}}
+{{- end -}}
