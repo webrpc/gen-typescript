@@ -3,10 +3,10 @@
 {{- $method := .Method -}}
 {{- $typeMap := .TypeMap -}}
 
-{{if gt (len $method.Inputs) 0}}args: {{$method.Name}}Args, {{end}}options?:
+{{if gt (len $method.Inputs) 0}}args: {{$method.Name}}Args, {{end}}
 {{- if $method.StreamOutput -}}
-    WebrpcStreamOptions<{{$method.Name}}Return>
+    options: WebrpcStreamOptions<{{$method.Name}}Return>
 {{- else -}}
-    WebrpcOptions
+    options?: WebrpcOptions
 {{- end -}}
 {{- end -}}
