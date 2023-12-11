@@ -30,6 +30,15 @@
   {{- exit 1 -}}
 {{- end -}}
 
+{{- set $opts "" false -}}
+{{- range $_, $service := .Services -}}
+  {{- range $_, $method := $service.Methods -}}
+    {{ if eq $method.StreamOutput true -}}
+      {{- set $opts "streaming" true -}}
+    {{- end -}}
+  {{- end -}}
+{{- end }}
+
 {{- /* Map webrpc core types to JS. */ -}}
 {{- $typeMap := dict }}
 {{- set $typeMap "null" "null" -}}
