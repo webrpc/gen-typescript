@@ -24,14 +24,13 @@ export class {{.Name}} implements {{.Name}} {
   }
   {{range $_, $method := .Methods}}
     {{firstLetterToLower .Name}} = ({{template "methodInputs" dict "Method" . "TypeMap" $typeMap}}): Promise<{{if $method.StreamOutput}}void{{else}}{{$method.Name}}Return{{end}}> => {
-    return this.fetch(
-      this.url('{{.Name}}'),
-      {{- if .Inputs | len}}
+      return this.fetch(this.url('{{.Name}}'),
+    {{- if .Inputs | len -}}
       createHTTPRequest(args, options)
-      {{- else}}
+    {{- else -}}
       createHTTPRequest({}, options)
-      {{end -}}
-      {{- if $method.StreamOutput -}}
+    {{- end -}}
+    {{- if $method.StreamOutput -}}
     ).then(
       async(res) => {
         await sseResponse(res, options)
@@ -39,21 +38,18 @@ export class {{.Name}} implements {{.Name}} {
       (error) => {
         options.onError(error)
       })
-      {{else}}
-    ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-        {{- range $i, $output := .Outputs }}
-          {{$output.Name}}: <{{template "type" dict "Type" $output.Type "TypeMap" $typeMap}}>(_data.{{$output.Name}}),
-        {{- end -}}
-        {{if len .Outputs}}
-        {{end}}}
-        })
-        }, (error) => {
-        throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-        })
-      {{ end -}}
-  }
+    {{- else -}}
+      ).then((res) => {
+        return buildResponse(res).then(_data => {
+          return {
+          {{- range $i, $output := .Outputs }}
+            {{$output.Name}}: <{{template "type" dict "Type" $output.Type "TypeMap" $typeMap}}>(_data.{{$output.Name}}),
+          {{- end -}}
+          {{if len .Outputs}}
+          {{end}}}
+        })}, (error) => {throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })})
+    {{- end }}
+    }
   {{end}}
 }
 {{end -}}

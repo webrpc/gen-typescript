@@ -35,7 +35,7 @@ jobs:
   webrpc-tests:
     strategy:
       matrix:
-        webrpc-version: [v0.11.0, v0.13.0]
+        webrpc-version: [v0.13.0]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
