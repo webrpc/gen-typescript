@@ -79,7 +79,7 @@ export const WebRPCSchemaHash = "{{.SchemaHash}}"
 {{template "types" dict "Types" .Types "Services" .Services "TypeMap" $typeMap}}
 
 {{- if $opts.client}}
-  {{template "client" dict "Services" .Services "TypeMap" $typeMap}}
+  {{template "client" dict "Services" .Services "Opts" $opts "TypeMap" $typeMap}}
   {{template "clientHelpers" dict "WebrpcErrors" .WebrpcErrors "SchemaErrors" .Errors }}
 {{- end}}
 

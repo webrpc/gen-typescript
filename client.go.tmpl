@@ -1,6 +1,7 @@
 {{define "client"}}
 
 {{- $typeMap := .TypeMap -}}
+{{- $opts := .Opts -}}
 
 {{- if .Services}}
 //
@@ -57,5 +58,7 @@ export class {{.Name}} implements {{.Name}} {
 }
 {{end -}}
 {{end -}}
-  {{template "sse"}}
+  {{if $opts.streaming }}
+    {{template "sse"}}
+  {{end}}
 {{- end -}}
