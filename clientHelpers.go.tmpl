@@ -3,12 +3,12 @@
 {{- $schemaErrors := .SchemaErrors -}}
 {{- $opts := .Opts -}}
 
-const createHTTPRequest = (body: object = {}, options?: WebrpcOptions): object => {
+const createHTTPRequest = (body: object = {}, headers?: object, signal?: AbortSignal): object => {
   return {
     method: 'POST',
-    headers: { ...options?.headers, 'Content-Type': 'application/json' },
+    headers: { ...headers, 'Content-Type': 'application/json' },
     body: JSON.stringify(body || {}),
-    signal: options?.signal
+    signal
   }
 }
 

@@ -7,6 +7,6 @@
 {{- if $method.StreamOutput -}}
     options: WebrpcStreamOptions<{{$method.Name}}Return>
 {{- else -}}
-    options?: WebrpcOptions
+    headers?: object, signal?: AbortSignal
 {{- end -}}
 {{- end -}}
