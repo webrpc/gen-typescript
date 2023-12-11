@@ -1,6 +1,7 @@
 {{define "clientHelpers"}}
 {{- $webrpcErrors := .WebrpcErrors -}}
 {{- $schemaErrors := .SchemaErrors -}}
+{{- $opts := .Opts -}}
 
 const createHTTPRequest = (body: object = {}, options?: WebrpcOptions): object => {
   return {
@@ -121,10 +122,12 @@ export interface WebrpcOptions {
   signal?: AbortSignal;
 }
 
+{{ if $opts.streaming }}
 export interface WebrpcStreamOptions<T> extends WebrpcOptions {
   onMessage: (message: T) => void;
   onError: (error: WebrpcError) => void;
   onOpen?: () => void;
   onClose?: () => void;
 }
+{{ end }}
 {{end}}
