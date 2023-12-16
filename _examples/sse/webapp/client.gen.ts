@@ -74,47 +74,19 @@ export class Chat implements Chat {
   
   sendMessage = (args: SendMessageArgs, headers?: object, signal?: AbortSignal): Promise<SendMessageReturn> => {
     return this.fetch(
-      this.url('SendMessage'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {}
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
+      this.url('SendMessage'), createHTTPRequest(args, headers, signal)).then((res) => {
+        return buildResponse(res).then(_data => {
+          return {}
+          })}, (error) => {throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })}
+      )
   }
   
-  subscribeMessages = (args: SubscribeMessagesArgs, options: WebrpcStreamOptions<SubscribeMessagesReturn>): Promise<void> => {
-    return this.fetch(
-      this.url('SubscribeMessages'),
-      createHTTPRequest(args, headers, signal)).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          message: <Message>(_data.message),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
-  }
   
-  subscribeUsers = (options: WebrpcStreamOptions<SubscribeUsersReturn>): Promise<void> => {
-    return this.fetch(
-      this.url('SubscribeUsers'),
-      createHTTPRequest({}, headers, signal)
-      ).then((res) => {
-      return buildResponse(res).then(_data => {
-        return {
-          username: <string>(_data.username),
-        }
-      })
-    }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
-    })
-  }
+  subscribeMessages = (args: SubscribeMessagesArgs, options: WebrpcStreamOptions<SubscribeMessagesReturn>): Promise<void> => {}
+  
+  subscribeUsers = (options: WebrpcStreamOptions<SubscribeUsersReturn>): Promise<void> => {}
   
 }
-
   const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
   return {
     method: 'POST',
