@@ -16,7 +16,7 @@ jobs:
 
       - name: Install webrpc-gen
         run: |
-          curl -o ./webrpc-gen -fLJO https://github.com/webrpc/webrpc/releases/download/v0.11.0/webrpc-gen.linux-amd64
+          curl -o ./webrpc-gen -fLJO https://github.com/webrpc/webrpc/releases/download/v0.14.0/webrpc-gen.linux-amd64
           chmod +x ./webrpc-gen
           echo $PWD >> $GITHUB_PATH
 
