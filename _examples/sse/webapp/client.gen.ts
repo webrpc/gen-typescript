@@ -82,9 +82,25 @@ export class Chat implements Chat {
   }
   
   
-  subscribeMessages = (args: SubscribeMessagesArgs, options: WebrpcStreamOptions<SubscribeMessagesReturn>): Promise<void> => {}
+  subscribeMessages = (args: SubscribeMessagesArgs, options: WebrpcStreamOptions<SubscribeMessagesReturn>): Promise<void> => {
+    const _fetch = () => this.fetch(this.url("SubscribeMessages"),createHTTPRequest(args, options.headers, options.signal)
+      ).then(async (res) => {
+        await sseResponse(res, options, _fetch);
+    }, (error) => {
+      options.onError(error, _fetch);
+    });
+    return _fetch();
+  }
   
-  subscribeUsers = (options: WebrpcStreamOptions<SubscribeUsersReturn>): Promise<void> => {}
+  subscribeUsers = (options: WebrpcStreamOptions<SubscribeUsersReturn>): Promise<void> => {
+    const _fetch = () => this.fetch(this.url("SubscribeMessages"),createHTTPRequest({}, options.headers, options.signal)
+      ).then(async (res) => {
+        await sseResponse(res, options, _fetch);
+    }, (error) => {
+      options.onError(error, _fetch);
+    });
+    return _fetch();
+  }
   
 }
   const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
