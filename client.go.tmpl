@@ -52,4 +52,7 @@ export class {{.Name}} implements {{.Name}} {
 }
 {{- end -}}
 {{end -}}
+{{if $opts.streaming}}
+  {{template "sse"}}
+{{end}}
 {{end}}

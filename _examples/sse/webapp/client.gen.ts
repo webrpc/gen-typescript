@@ -103,6 +103,141 @@ export class Chat implements Chat {
   }
   
 }
+  
+const sseResponse = async (
+    res: Response,
+    options: WebrpcStreamOptions<any>,
+    retryFetch: () => Promise<void>
+) => {
+    const {onMessage, onOpen, onClose, onError} = options;
+
+    if (!res.ok) {
+        try {
+            await buildResponse(res);
+        } catch (error) {
+            // @ts-ignore
+            onError(error, retryFetch);
+        }
+        return;
+    }
+
+    if (!res.body) {
+        onError(
+            WebrpcBadResponseError.new({
+                status: res.status,
+                cause: "Invalid response, missing body",
+            }),
+            retryFetch
+        );
+        return;
+    }
+
+    onOpen && onOpen();
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let lastReadTime = Date.now();
+    const timeout = (10 + 1) * 1000;
+    let intervalId: any;
+
+    try {
+        intervalId = setInterval(() => {
+            if (Date.now() - lastReadTime > timeout) {
+                throw WebrpcStreamLostError.new({cause: "Stream timed out"});
+            }
+        }, timeout);
+
+        while (true) {
+            let value;
+            let done;
+            try {
+                ({value, done} = await reader.read());
+                lastReadTime = Date.now();
+                buffer += decoder.decode(value, {stream: true});
+            } catch (error) {
+                let message = "";
+                if (error instanceof Error) {
+                    message = error.message;
+                }
+
+                if (error instanceof DOMException && error.name === "AbortError") {
+                    onError(
+                        WebrpcRequestFailedError.new({
+                            message: "AbortError",
+                            cause: `AbortError: ${message}`,
+                        }),
+                        () => {
+                            throw new Error("Abort signal cannot be used to reconnect");
+                        }
+                    );
+                } else {
+                    onError(
+                        WebrpcStreamLostError.new({
+                            cause: `reader.read(): ${message}`,
+                        }),
+                        retryFetch
+                    );
+                }
+                return;
+            }
+
+            let lines = buffer.split("\n");
+            for (let i = 0; i < lines.length - 1; i++) {
+                if (lines[i].length == 0) {
+                    continue;
+                }
+                try {
+                    let data = JSON.parse(lines[i]);
+                    if (data.hasOwnProperty("webrpcError")) {
+                        const error = data.webrpcError;
+                        const code: number =
+                            typeof error.code === "number" ? error.code : 0;
+                        onError(
+                            (webrpcErrorByCode[code] || WebrpcError).new(error),
+                            retryFetch
+                        );
+                        return;
+                    } else {
+                        onMessage(data);
+                    }
+                } catch (error) {
+                    if (
+                        error instanceof Error &&
+                        error.message === "Abort signal cannot be used to reconnect"
+                    ) {
+                        throw error;
+                    }
+                    onError(
+                        WebrpcBadResponseError.new({
+                            status: res.status,
+                            // @ts-ignore
+                            cause: `JSON.parse(): ${error.message}`,
+                        }),
+                        retryFetch
+                    );
+                }
+            }
+
+            if (!done) {
+                buffer = lines[lines.length - 1];
+                continue;
+            }
+
+            onClose && onClose();
+            return;
+        }
+    } catch (error) {
+        // WebrpcStreamLostError is thrown when the stream is lost
+        // @ts-ignore
+        onError(error, retryFetch);
+    } finally {
+        clearInterval(intervalId);
+    }
+};
+
+
+
   const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
   return {
     method: 'POST',
