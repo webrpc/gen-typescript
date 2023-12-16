@@ -25,7 +25,7 @@ export class {{.Name}} implements {{.Name}} {
   {{range $_, $method := .Methods}}
   {{firstLetterToLower .Name}} = ({{template "methodInputs" dict "Method" . "TypeMap" $typeMap}}): Promise<{{if $method.StreamOutput}}void{{else}}{{$method.Name}}Return{{end}}> => {
   {{- if $method.StreamOutput }}
-    const _fetch = () => this.fetch(this.url("SubscribeMessages"),
+    const _fetch = () => this.fetch(this.url('{{.Name}}'),
       {{- if .Inputs | len }}createHTTPRequest(args, options.headers, options.signal){{- else}}createHTTPRequest({}, options.headers, options.signal){{end }}
       ).then(async (res) => {
         await sseResponse(res, options, _fetch);
