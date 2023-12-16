@@ -237,8 +237,7 @@ const sseResponse = async (
 };
 
 
-
-  const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
+  const createHTTPRequest = (body: object = {}, headers?: object, signal?: AbortSignal): object => {
   return {
     method: 'POST',
     headers: { ...headers, 'Content-Type': 'application/json' },
