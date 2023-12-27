@@ -2,8 +2,7 @@
 {{- $webrpcErrors := .WebrpcErrors -}}
 {{- $schemaErrors := .SchemaErrors -}}
 {{- $opts := .Opts -}}
-
-const createHTTPRequest = (body: object = {}, headers?: object, signal?: AbortSignal): object => {
+const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
   return {
     method: 'POST',
     headers: { ...headers, 'Content-Type': 'application/json' },

@@ -80,6 +80,7 @@ export const WebRPCSchemaHash = "{{.SchemaHash}}"
 
 {{- if $opts.client}}
   {{template "client" dict "Services" .Services "Opts" $opts "TypeMap" $typeMap}}
+
   {{template "clientHelpers" dict "WebrpcErrors" .WebrpcErrors "SchemaErrors" .Errors "Opts" $opts }}
 {{- end}}
 

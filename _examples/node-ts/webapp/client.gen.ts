@@ -76,29 +76,35 @@ export class ExampleService implements ExampleService {
   
   ping = (headers?: object, signal?: AbortSignal): Promise<PingReturn> => {
     return this.fetch(
-      this.url('Ping'), createHTTPRequest({}, headers, signal)).then((res) => {
-        return buildResponse(res).then(_data => {
-          return {}
-          })}, (error) => {throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })}
-      )
+      this.url('Ping'),
+      createHTTPRequest({}, headers, signal)
+      ).then((res) => {
+      return buildResponse(res).then(_data => {
+        return {}
+      })
+    }, (error) => {
+      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+    })
   }
-  
   
   getUser = (args: GetUserArgs, headers?: object, signal?: AbortSignal): Promise<GetUserReturn> => {
     return this.fetch(
-      this.url('GetUser'), createHTTPRequest(args, headers, signal)).then((res) => {
-        return buildResponse(res).then(_data => {
-          return {
-            code: <number>(_data.code),
-            user: <User>(_data.user),
-          }
-          })}, (error) => {throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })}
-      )
+      this.url('GetUser'),
+      createHTTPRequest(args, headers, signal)).then((res) => {
+      return buildResponse(res).then(_data => {
+        return {
+          code: <number>(_data.code),
+          user: <User>(_data.user),
+        }
+      })
+    }, (error) => {
+      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+    })
   }
   
-  
 }
-  const createHTTPRequest = (body: object = {}, headers?: object, signal?: AbortSignal): object => {
+
+  const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
   return {
     method: 'POST',
     headers: { ...headers, 'Content-Type': 'application/json' },

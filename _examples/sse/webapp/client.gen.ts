@@ -74,13 +74,15 @@ export class Chat implements Chat {
   
   sendMessage = (args: SendMessageArgs, headers?: object, signal?: AbortSignal): Promise<SendMessageReturn> => {
     return this.fetch(
-      this.url('SendMessage'), createHTTPRequest(args, headers, signal)).then((res) => {
-        return buildResponse(res).then(_data => {
-          return {}
-          })}, (error) => {throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })}
-      )
+      this.url('SendMessage'),
+      createHTTPRequest(args, headers, signal)).then((res) => {
+      return buildResponse(res).then(_data => {
+        return {}
+      })
+    }, (error) => {
+      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+    })
   }
-  
   
   subscribeMessages = (args: SubscribeMessagesArgs, options: WebrpcStreamOptions<SubscribeMessagesReturn>): Promise<void> => {
     const _fetch = () => this.fetch(this.url('SubscribeMessages'),createHTTPRequest(args, options.headers, options.signal)
@@ -91,7 +93,6 @@ export class Chat implements Chat {
     });
     return _fetch();
   }
-  
   subscribeUsers = (options: WebrpcStreamOptions<SubscribeUsersReturn>): Promise<void> => {
     const _fetch = () => this.fetch(this.url('SubscribeUsers'),createHTTPRequest({}, options.headers, options.signal)
       ).then(async (res) => {
@@ -101,7 +102,6 @@ export class Chat implements Chat {
     });
     return _fetch();
   }
-  
 }
   
 const sseResponse = async (
@@ -240,7 +240,8 @@ const sseResponse = async (
 };
 
 
-  const createHTTPRequest = (body: object = {}, headers?: object, signal?: AbortSignal): object => {
+
+  const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
   return {
     method: 'POST',
     headers: { ...headers, 'Content-Type': 'application/json' },
