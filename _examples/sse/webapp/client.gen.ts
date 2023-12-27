@@ -187,8 +187,9 @@ const sseResponse = async (
                 if (lines[i].length == 0) {
                     continue;
                 }
+                let data: any;
                 try {
-                    let data = JSON.parse(lines[i]);
+                    data = JSON.parse(lines[i]);
                     if (data.hasOwnProperty("webrpcError")) {
                         const error = data.webrpcError;
                         const code: number =
@@ -198,8 +199,6 @@ const sseResponse = async (
                             retryFetch
                         );
                         return;
-                    } else {
-                        onMessage(data);
                     }
                 } catch (error) {
                     if (
@@ -217,6 +216,7 @@ const sseResponse = async (
                         retryFetch
                     );
                 }
+                onMessage(data);
             }
 
             if (!done) {
@@ -228,9 +228,12 @@ const sseResponse = async (
             return;
         }
     } catch (error) {
-        // WebrpcStreamLostError is thrown when the stream is lost
         // @ts-ignore
-        onError(error, retryFetch);
+        if (error instanceof WebrpcStreamLostError) {
+            onError(error, retryFetch);
+        } else {
+            throw error;
+        }
     } finally {
         clearInterval(intervalId);
     }
