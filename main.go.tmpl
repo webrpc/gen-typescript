@@ -30,6 +30,15 @@
   {{- exit 1 -}}
 {{- end -}}
 
+{{- set $opts "" false -}}
+{{- range $_, $service := .Services -}}
+  {{- range $_, $method := $service.Methods -}}
+    {{ if eq $method.StreamOutput true -}}
+      {{- set $opts "streaming" true -}}
+    {{- end -}}
+  {{- end -}}
+{{- end }}
+
 {{- /* Map webrpc core types to JS. */ -}}
 {{- $typeMap := dict }}
 {{- set $typeMap "null" "null" -}}
@@ -70,8 +79,9 @@ export const WebRPCSchemaHash = "{{.SchemaHash}}"
 {{template "types" dict "Types" .Types "Services" .Services "TypeMap" $typeMap}}
 
 {{- if $opts.client}}
-  {{template "client" dict "Services" .Services "TypeMap" $typeMap}}
-  {{template "clientHelpers" dict "WebrpcErrors" .WebrpcErrors "SchemaErrors" .Errors }}
+  {{template "client" dict "Services" .Services "Opts" $opts "TypeMap" $typeMap}}
+
+  {{template "clientHelpers" dict "WebrpcErrors" .WebrpcErrors "SchemaErrors" .Errors "Opts" $opts }}
 {{- end}}
 
 {{- if $opts.server}}

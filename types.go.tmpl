@@ -44,7 +44,7 @@ export interface {{$type.Name}} {
 {{- range $_, $service := $services}}
 export interface {{$service.Name}} {
 {{- range $_, $method := $service.Methods}}
-  {{firstLetterToLower $method.Name}}({{template "methodInputs" dict "Method" $method "TypeMap" $typeMap}}): Promise<{{$method.Name}}Return>
+  {{firstLetterToLower $method.Name}}({{template "methodInputs" dict "Method" $method "TypeMap" $typeMap}}): Promise<{{if $method.StreamOutput}}void{{else}}{{$method.Name}}Return{{end}}>
 {{- end}}
 }
 
