@@ -12,19 +12,11 @@
 {{range $_i, $type := $types -}}
 
 {{if isEnumType $type }}
-  {{- if eq $type.Type.Expr "string" }}
-    export {{$type.Name}} =
-    {{- range $i, $field := $type.Fields}}
-      {{- if $i}}|{{end}} '{{$field.Name}}'
-    {{- end}}
-  {{ else }}
-    export enum {{$type.Name}} {
-    {{- range $i, $field := $type.Fields}}
-      {{- if $i}},{{end}}
-      {{$field.Name}} = '{{$field.Name}}'
-    {{- end}}
-  {{ end -}}
-{{- if $type.}}
+export enum {{$type.Name}} {
+{{- range $i, $field := $type.Fields}}
+  {{- if $i}},{{end}}
+  {{$field.Name}} = '{{$field.Name}}'
+{{- end}}
 }
 {{end -}}
 
