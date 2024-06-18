@@ -33,3 +33,5 @@ struct Page
 service ExampleService
   - Ping() => ()
   - GetUser(userID: uint64) => (code: uint32, user: User)
+  - GetKinds() => (kinds: []Kind)
+  - GetKindCount() => (count: map<Kind,uint32>)

@@ -57,6 +57,14 @@ describe("Test interoperability with webrpc-test reference server", () => {
       testApiClient.sendComplex(complex, {})
     ).resolves.not.toThrowError();
   });
+
+  it("getKinds() should receive a list kinds successfully", async () => {
+    await expect(testApiClient.getKinds()).resolves.not.toThrowError();
+  });
+
+  it("GetKindCount() should receive a count of kinds successfully", async () => {
+    await expect(testApiClient.getKindCount()).resolves.not.toThrowError();
+  });
 });
 
 describe("Test custom webrpc schema errors", () => {
