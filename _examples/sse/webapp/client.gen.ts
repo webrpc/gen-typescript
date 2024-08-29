@@ -64,7 +64,7 @@ export class Chat implements Chat {
   protected path = '/rpc/Chat/'
 
   constructor(hostname: string, fetch: Fetch) {
-    this.hostname = hostname
+    this.hostname = hostname.replace(/\/*$/, '')
     this.fetch = (input: RequestInfo, init?: RequestInit) => fetch(input, init)
   }
 
