@@ -23,16 +23,30 @@ export class {{.Name}} implements {{.Name}} {
     return this.hostname + this.path + name
   }
   {{range $_, $method := .Methods}}
-  {{firstLetterToLower .Name}} = ({{template "methodInputs" dict "Method" . "TypeMap" $typeMap}}): Promise<{{if $method.StreamOutput}}void{{else}}{{$method.Name}}Return{{end}}> => {
+  {{firstLetterToLower .Name}} = ({{template "methodInputs" dict "Method" . "TypeMap" $typeMap}}): {{if $method.StreamOutput}}WebrpcStreamController{{else}}Promise<{{$method.Name}}Return>{{end}} => {
   {{- if $method.StreamOutput }}
+    const abortController = new AbortController();
+    const abortSignal = abortController.signal
+
+    if (options.signal) {
+      abortSignal.addEventListener("abort", () => abortController.abort(options.signal?.reason), {
+        signal: options.signal,
+      });
+    }
+
     const _fetch = () => this.fetch(this.url('{{.Name}}'),
-      {{- if .Inputs | len }}createHTTPRequest(args, options.headers, options.signal){{- else}}createHTTPRequest({}, options.headers, options.signal){{end }}
+      {{- if .Inputs | len }}createHTTPRequest(args, options.headers, abortSignal){{- else}}createHTTPRequest({}, options.headers, options.signal){{end }}
       ).then(async (res) => {
         await sseResponse(res, options, _fetch);
     }, (error) => {
       options.onError(error, _fetch);
     });
-    return _fetch();
+
+    const resp = _fetch();
+    return {
+      abort: abortController.abort.bind(abortController),
+      closed: resp
+    };
   }
   {{- else }}
     return this.fetch(
