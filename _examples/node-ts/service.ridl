@@ -31,6 +31,7 @@ struct Page
 
 
 service ExampleService
+  # Ping to test healthiness of service
   - Ping() => ()
   # Get user endpoint
   #
