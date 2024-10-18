@@ -32,4 +32,8 @@ struct Page
 
 service ExampleService
   - Ping() => ()
+  # Get user endpoint
+  #
+  # gives you basic info about user
+  @deprecated:GetUserV2
   - GetUser(userID: uint64) => (code: uint32, user: User)

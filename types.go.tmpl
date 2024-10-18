@@ -44,6 +44,17 @@ export interface {{$type.Name}} {
 {{- range $_, $service := $services}}
 export interface {{$service.Name}} {
 {{- range $_, $method := $service.Methods}}
+{{- $deprecated := index $method.Annotations "deprecated" -}}
+  {{- if or (gt (len $method.Comments) 0) ($deprecated) }}
+  /**
+  {{- range $_, $comment := $method.Comments }}
+   * {{ replaceAll $comment "\"" "'" }}
+  {{- end }}
+  {{- if $deprecated }}
+   * @deprecated {{ if ne $deprecated.Value "" }}use {{ $deprecated.Value }}{{ end }}
+  {{- end }}
+  */
+  {{- end }}
   {{firstLetterToLower $method.Name}}({{template "methodInputs" dict "Method" $method "TypeMap" $typeMap}}): Promise<{{if $method.StreamOutput}}void{{else}}{{$method.Name}}Return{{end}}>
 {{- end}}
 }
