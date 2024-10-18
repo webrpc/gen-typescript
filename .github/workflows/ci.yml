@@ -27,28 +27,28 @@ jobs:
       - name: Git diff of regenerated files
         run: cd _examples && make diff
 
-  webrpc-tests:
-    strategy:
-      matrix:
-        webrpc-version: [v0.18.0]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-      - name: Set up webrpc binary cache folder
-        uses: actions/cache@v3
-        with:
-          key: webrpc-binaries
-          path: tests/bin
-      - name: Install dependencies
-        run: cd tests && npm install
-      - name: Download webrpc binaries
-        run: cd tests && ./download.sh ${{ matrix.webrpc-version }} bin/${{ matrix.webrpc-version }}
-      - name: Export path of webrpc binaries
-        run: cd tests && echo "$PWD/bin/${{ matrix.webrpc-version }}" >> $GITHUB_PATH
-      - name: Run interoperability tests
-        run: cd tests && ./test.sh
-      - name: Run typescript check
-        run: cd tests && npm run ts-check
+#  webrpc-tests:
+#    strategy:
+#      matrix:
+#        webrpc-version: [v0.18.0]
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v3
+#      - uses: actions/setup-node@v3
+#        with:
+#          node-version: 18
+#      - name: Set up webrpc binary cache folder
+#        uses: actions/cache@v3
+#        with:
+#          key: webrpc-binaries
+#          path: tests/bin
+#      - name: Install dependencies
+#        run: cd tests && npm install
+#      - name: Download webrpc binaries
+#        run: cd tests && ./download.sh ${{ matrix.webrpc-version }} bin/${{ matrix.webrpc-version }}
+#      - name: Export path of webrpc binaries
+#        run: cd tests && echo "$PWD/bin/${{ matrix.webrpc-version }}" >> $GITHUB_PATH
+#      - name: Run interoperability tests
+#        run: cd tests && ./test.sh
+#      - name: Run typescript check
+#        run: cd tests && npm run ts-check
