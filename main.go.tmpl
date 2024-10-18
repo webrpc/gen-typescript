@@ -76,7 +76,7 @@ export const WebRPCSchemaVersion = "{{.SchemaVersion}}"
 // Schema hash generated from your RIDL schema
 export const WebRPCSchemaHash = "{{.SchemaHash}}"
 
-{{template "types" dict "Types" .Types "Services" .Services "TypeMap" $typeMap}}
+{{template "types" dict "Types" .Types "Services" .Services "TypeMap" $typeMap "WebrpcVersion" .WebrpcVersion}}
 
 {{- if $opts.client}}
   {{template "client" dict "Services" .Services "Opts" $opts "TypeMap" $typeMap}}

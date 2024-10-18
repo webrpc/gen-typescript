@@ -3,6 +3,7 @@
 {{- $typeMap := .TypeMap -}}
 {{- $types := .Types -}}
 {{- $services := .Services -}}
+{{- $webrpcVersion := .WebrpcVersion -}}
 
 //
 // Types
@@ -44,6 +45,7 @@ export interface {{$type.Name}} {
 {{- range $_, $service := $services}}
 export interface {{$service.Name}} {
 {{- range $_, $method := $service.Methods}}
+{{- if not (minVersion $webrpcVersion "v0.20.0") }}
 {{- $deprecated := index $method.Annotations "deprecated" -}}
   {{- if or (gt (len $method.Comments) 0) ($deprecated) }}
   /**
@@ -54,7 +56,8 @@ export interface {{$service.Name}} {
    * @deprecated {{ if ne $deprecated.Value "" }}use {{ $deprecated.Value }}{{ end }}
   {{- end }}
   */
-  {{- end }}
+{{- end }}
+{{- end }}
   {{firstLetterToLower $method.Name}}({{template "methodInputs" dict "Method" $method "TypeMap" $typeMap}}): Promise<{{if $method.StreamOutput}}void{{else}}{{$method.Name}}Return{{end}}>
 {{- end}}
 }
