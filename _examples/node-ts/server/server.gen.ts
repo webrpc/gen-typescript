@@ -26,7 +26,7 @@ type WebrpcGenVersions = {
   schemaVersion: string;
 };
 
-export function VersionFromHeader(headers: Headers): WebrpcGenVersions | null {
+export function VersionFromHeader(headers: Headers): WebrpcGenVersions {
   const headerValue = headers.get(WebrpcHeader);
   if (!headerValue) {
     throw new Error("header is empty or missing");
@@ -38,28 +38,23 @@ export function VersionFromHeader(headers: Headers): WebrpcGenVersions | null {
 function parseWebrpcGenVersions(header: string): WebrpcGenVersions {
   const versions = header.split(";");
   if (versions.length < 3) {
-    throw new Error(`expected at least 3 parts while parsing webrpc header: ${header}`);
+    return {
+      webrpcGenVersion: "",
+      codeGenName: "",
+      codeGenVersion: "",
+      schemaName: "",
+      schemaVersion: "",
+    };
   }
 
   const [_, webrpcGenVersion] = versions[0].split("@");
-  if (!webrpcGenVersion) {
-    throw new Error(`webrpc gen version could not be parsed from: ${versions[0]}`);
-  }
-
-  const [tmplTarget, tmplVersion] = versions[1].split("@");
-  if (!tmplTarget || !tmplVersion) {
-    throw new Error(`tmplTarget and tmplVersion could not be parsed from: ${versions[1]}`);
-  }
-
+  const [codeGenName, codeGenVersion] = versions[1].split("@");
   const [schemaName, schemaVersion] = versions[2].split("@");
-  if (!schemaName || !schemaVersion) {
-    throw new Error(`schema name and schema version could not be parsed from: ${versions[2]}`);
-  }
 
   return {
     webrpcGenVersion,
-    codeGenName: tmplTarget,
-    codeGenVersion: tmplVersion,
+    codeGenName,
+    codeGenVersion,
     schemaName,
     schemaVersion,
   };
