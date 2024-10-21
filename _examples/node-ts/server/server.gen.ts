@@ -29,7 +29,13 @@ type WebrpcGenVersions = {
 export function VersionFromHeader(headers: Headers): WebrpcGenVersions {
   const headerValue = headers.get(WebrpcHeader);
   if (!headerValue) {
-    throw new Error("header is empty or missing");
+    return {
+      webrpcGenVersion: "",
+      codeGenName: "",
+      codeGenVersion: "",
+      schemaName: "",
+      schemaVersion: "",
+    };
   }
 
   return parseWebrpcGenVersions(headerValue);
