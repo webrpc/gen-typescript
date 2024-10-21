@@ -53,7 +53,7 @@ export interface {{$service.Name}} {
    * {{ replaceAll $comment "\"" "'" }}
   {{- end }}
   {{- if $deprecated }}
-   * @deprecated {{ if ne $deprecated.Value "" }}use {{ $deprecated.Value }}{{ end }}
+   * @deprecated
   {{- end }}
   */
 {{- end }}

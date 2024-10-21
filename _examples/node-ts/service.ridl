@@ -36,5 +36,5 @@ service ExampleService
   # Get user endpoint
   #
   # gives you basic info about user
-  @deprecated:GetUserV2
+  @deprecated
   - GetUser(userID: uint64) => (code: uint32, user: User)
