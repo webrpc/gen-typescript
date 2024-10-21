@@ -26,7 +26,7 @@ type WebrpcGenVersions = {
   schemaVersion: string;
 };
 
-function versionFromHeader(headers: Headers): WebrpcGenVersions | null {
+export function VersionFromHeader(headers: Headers): WebrpcGenVersions | null {
   const headerValue = headers.get(WebrpcHeader);
   if (!headerValue) {
     throw new Error("header is empty or missing");
@@ -157,7 +157,7 @@ export class ExampleService implements ExampleService {
 
   const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
   const headers = { ...headers, 'Content-Type': 'application/json' }
-  headers[WebrpcHeader] = WebrpcHeaderValue
+    headers[WebrpcHeader] = WebrpcHeaderValue
 
   return {
     method: 'POST',

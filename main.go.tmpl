@@ -89,7 +89,7 @@ type WebrpcGenVersions = {
   schemaVersion: string;
 };
 
-function versionFromHeader(headers: Headers): WebrpcGenVersions | null {
+export function VersionFromHeader(headers: Headers): WebrpcGenVersions | null {
   const headerValue = headers.get(WebrpcHeader);
   if (!headerValue) {
     throw new Error("header is empty or missing");
