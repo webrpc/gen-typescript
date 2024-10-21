@@ -1,15 +1,13 @@
 import {ExampleService, VersionFromHeader, WebrpcError, WebrpcHeader} from './client.gen'
 
-const fetchWithWebrpcHeaderParsing = async (input: RequestInfo | URL, init?: RequestInit) => {
+const fetchWithWebrpcHeaderParsing = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
 	if (init && init.headers) {
 		console.log("client headers", VersionFromHeader(new Headers(init.headers)))
 	}
 
 	const res = await fetch(input, init)
+
 	console.log("server headers", res.headers.get(WebrpcHeader))
-	for (const header of res.headers) {
-		console.log(header)
-	}
 
 	return new Promise(() => {
 		return res

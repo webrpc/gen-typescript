@@ -8,6 +8,7 @@ app.use((req, res, next) => {
 	res.setHeader('Access-Control-Allow-Origin', '*')
 	res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
 	res.setHeader('Access-Control-Allow-Headers', `Content-Type, ${WebrpcHeader}`)
+	res.setHeader('Access-Control-Expose-Headers', `Content-Type, ${WebrpcHeader}`)
 
 	if (req.method === 'OPTIONS') {
 		res.status(200).end()
