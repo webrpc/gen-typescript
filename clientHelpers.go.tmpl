@@ -5,7 +5,7 @@
 const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
   const headers = { ...headers, 'Content-Type': 'application/json' }
   {{- if eq $opts.webrpcHeader true }}
-    headers[WebrpcHeader] = WebrpcHeaderValue
+  headers[WebrpcHeader] = WebrpcHeaderValue
   {{- end }}
 
   return {
