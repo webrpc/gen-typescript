@@ -4,6 +4,7 @@
 {{- $opts := dict -}}
 {{- set $opts "client" (ternary (in .Opts.client "" "true") true false) -}}
 {{- set $opts "server" (ternary (in .Opts.server "" "true") true false) -}}
+{{- set $opts "webrpcHeader" (ternary (eq (default .Opts.webrpcHeader "true") "false") false true) -}}
 
 {{- /* Print help on -help. */ -}}
 {{- if exists .Opts "help" -}}
@@ -67,6 +68,10 @@
 //
 // {{.WebrpcGenCommand}}
 
+export const WebrpcHeader = "Webrpc"
+
+export const WebrpcHeaderValue = "{{ .WebrpcHeader }}"
+
 // WebRPC description and code-gen version
 export const WebRPCVersion = "{{.WebrpcVersion}}"
 
@@ -75,6 +80,54 @@ export const WebRPCSchemaVersion = "{{.SchemaVersion}}"
 
 // Schema hash generated from your RIDL schema
 export const WebRPCSchemaHash = "{{.SchemaHash}}"
+
+type WebrpcGenVersions = {
+  webrpcGenVersion: string;
+  codeGenName: string;
+  codeGenVersion: string;
+  schemaName: string;
+  schemaVersion: string;
+};
+
+export function VersionFromHeader(headers: Headers): WebrpcGenVersions {
+  const headerValue = headers.get(WebrpcHeader);
+  if (!headerValue) {
+    return {
+      webrpcGenVersion: "",
+      codeGenName: "",
+      codeGenVersion: "",
+      schemaName: "",
+      schemaVersion: "",
+    };
+  }
+
+  return parseWebrpcGenVersions(headerValue);
+}
+
+function parseWebrpcGenVersions(header: string): WebrpcGenVersions {
+  const versions = header.split(";");
+  if (versions.length < 3) {
+    return {
+      webrpcGenVersion: "",
+      codeGenName: "",
+      codeGenVersion: "",
+      schemaName: "",
+      schemaVersion: "",
+    };
+  }
+
+  const [_, webrpcGenVersion] = versions[0].split("@");
+  const [codeGenName, codeGenVersion] = versions[1].split("@");
+  const [schemaName, schemaVersion] = versions[2].split("@");
+
+  return {
+    webrpcGenVersion,
+    codeGenName,
+    codeGenVersion,
+    schemaName,
+    schemaVersion,
+  };
+}
 
 {{template "types" dict "Types" .Types "Services" .Services "TypeMap" $typeMap}}
 

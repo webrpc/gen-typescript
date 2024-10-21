@@ -1,6 +1,20 @@
-import { ExampleService, WebrpcError } from './client.gen'
+import {ExampleService, VersionFromHeader, WebrpcError, WebrpcHeader} from './client.gen'
 
-const exampleService = new ExampleService('http://localhost:3000', fetch)
+const fetchWithWebrpcHeaderParsing = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+	if (init && init.headers) {
+		console.log("client headers", VersionFromHeader(new Headers(init.headers)))
+	}
+
+	const res = await fetch(input, init)
+
+	console.log("server headers", res.headers.get(WebrpcHeader))
+
+	return new Promise(() => {
+		return res
+	})
+}
+
+const exampleService = new ExampleService('http://localhost:3000', fetchWithWebrpcHeaderParsing)
 
 document.addEventListener('DOMContentLoaded', () => {
 	const pingButton = document.getElementById('js-ping-btn')

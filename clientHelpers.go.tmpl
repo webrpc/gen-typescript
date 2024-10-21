@@ -3,9 +3,14 @@
 {{- $schemaErrors := .SchemaErrors -}}
 {{- $opts := .Opts -}}
 const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
+  const reqHeaders = { ...headers, 'Content-Type': 'application/json' }
+  {{- if eq $opts.webrpcHeader true }}
+  reqHeaders[WebrpcHeader] = WebrpcHeaderValue
+  {{- end }}
+
   return {
     method: 'POST',
-    headers: { ...headers, 'Content-Type': 'application/json' },
+    headers: reqHeaders,
     body: JSON.stringify(body || {}),
     signal
   }
