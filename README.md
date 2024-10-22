@@ -38,10 +38,11 @@ As you can see, the `-target` supports default `typescript`, any git URI, or a l
 ### Set custom template variables
 Change any of the following values by passing `-option="Value"` CLI flag to `webrpc-gen`.
 
-| webrpc-gen -option   | Description                | Default value              |
-|----------------------|----------------------------|----------------------------|
-| `-client`            | generate client code       | unset (`false`)            |
-| `-server`            | generate server code       | unset (`false`)            |
+| webrpc-gen -option | Description          | Default value                                     | Version |
+|--------------------|----------------------|---------------------------------------------------|---------|
+| `-client`          | generate client code | unset (`false`)                                   | v0.0.1  |
+| `-server`          | generate server code | unset (`false`)                                   | v0.0.1  | 
+| `-webrpcHeader`    | `true`               | enable client send webrpc version in http headers | v0.15.0 |
 
 ## LICENSE
 
