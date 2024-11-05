@@ -127,9 +127,15 @@ export interface WebrpcStreamOptions<T> extends WebrpcOptions {
   onOpen?: () => void;
   onClose?: () => void;
 }
+
 export interface WebrpcOptions {
   headers?: HeadersInit;
   signal?: AbortSignal;
+}
+
+export interface WebrpcStreamController {
+  abort: (reason?: any) => void;
+  closed: Promise<void>;
 }
 {{end}}
 {{end}}
