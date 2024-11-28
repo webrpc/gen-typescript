@@ -110,7 +110,16 @@ export enum errors {
 {{- end}}
 }
 
-const webrpcErrorByCode: { [code: number]: any } = {
+export enum WebrpcErrorCodes {
+{{- range $_, $error := $webrpcErrors}}
+  {{$error.Name}} = {{$error.Code}},
+{{- end }}
+{{- range $_, $error := $schemaErrors}}
+  {{$error.Name}} = {{$error.Code}},
+{{- end }}
+}
+
+export const webrpcErrorByCode: { [code: number]: any } = {
 {{- range $_, $error := $webrpcErrors}}
   [{{$error.Code}}]: {{$error.Name}}Error,
 {{- end }}
