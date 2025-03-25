@@ -27,7 +27,10 @@ struct Page
   - num: uint32
 
 service ExampleService
+    @deprecated:"Use /health endpoint instead."
   - Ping() => ()
+
+  # GetUser returns a user by ID.
   - GetUser(userID: uint64) => (code: uint32, user: User)
 
 error 1000 Unauthorized     "Unauthorized access"                                HTTP 401
