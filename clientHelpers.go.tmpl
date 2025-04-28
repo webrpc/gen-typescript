@@ -76,7 +76,7 @@ export class {{$error.Name}}Error extends WebrpcError {
     name: string = '{{$error.Name}}',
     code: number = {{$error.Code}},
     message: string = `{{$error.Message}}`,
-    status: number = 0,
+    status: number = {{$error.Status}},
     cause?: string
   ) {
     super(name, code, message, status, cause)
