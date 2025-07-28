@@ -59,7 +59,7 @@ const sseResponse = async (
 
             if (error instanceof DOMException && error.name === "AbortError") {
                 onError(
-                    WebrpcRequestFailedError.new({
+                    WebrpcClientAbortedError.new({
                         message: "AbortError",
                         cause: `AbortError: ${message}`,
                     }),
