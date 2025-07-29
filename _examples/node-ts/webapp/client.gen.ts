@@ -141,7 +141,7 @@ export class ExampleService implements ExampleService {
         return {}
       })
     }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
     })
   }
   
@@ -156,7 +156,7 @@ export class ExampleService implements ExampleService {
         }
       })
     }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
     })
   }
   
@@ -180,13 +180,9 @@ const buildResponse = (res: Response): Promise<any> => {
     try {
       data = JSON.parse(text)
     } catch(error) {
-      let message = ''
-      if (error instanceof Error)  {
-        message = error.message
-      }
       throw WebrpcBadResponseError.new({
         status: res.status,
-        cause: `JSON.parse(): ${message}: response text: ${text}`},
+        cause: `JSON.parse(): ${error instanceof Error ? error.message : String(error)}: response text: ${text}`},
       )
     }
     if (!res.ok) {
