@@ -530,7 +530,7 @@ export class EmptyUsernameError extends WebrpcError {
     name: string = 'EmptyUsername',
     code: number = 100,
     message: string = `Username must be provided.`,
-    status: number = 0,
+    status: number = 400,
     cause?: string
   ) {
     super(name, code, message, status, cause)

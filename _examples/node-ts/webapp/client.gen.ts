@@ -380,7 +380,7 @@ export class UnauthorizedError extends WebrpcError {
     name: string = 'Unauthorized',
     code: number = 1000,
     message: string = `Unauthorized access`,
-    status: number = 0,
+    status: number = 401,
     cause?: string
   ) {
     super(name, code, message, status, cause)
@@ -393,7 +393,7 @@ export class PermissionDeniedError extends WebrpcError {
     name: string = 'PermissionDenied',
     code: number = 1001,
     message: string = `Permission denied`,
-    status: number = 0,
+    status: number = 403,
     cause?: string
   ) {
     super(name, code, message, status, cause)
@@ -406,7 +406,7 @@ export class SessionExpiredError extends WebrpcError {
     name: string = 'SessionExpired',
     code: number = 1002,
     message: string = `Session expired`,
-    status: number = 0,
+    status: number = 403,
     cause?: string
   ) {
     super(name, code, message, status, cause)
@@ -419,7 +419,7 @@ export class GeoblockedError extends WebrpcError {
     name: string = 'Geoblocked',
     code: number = 1003,
     message: string = `Geoblocked region`,
-    status: number = 0,
+    status: number = 451,
     cause?: string
   ) {
     super(name, code, message, status, cause)
@@ -432,7 +432,7 @@ export class RateLimitedError extends WebrpcError {
     name: string = 'RateLimited',
     code: number = 1004,
     message: string = `Rate-limited. Please slow down.`,
-    status: number = 0,
+    status: number = 429,
     cause?: string
   ) {
     super(name, code, message, status, cause)
@@ -445,7 +445,7 @@ export class CorsDisallowedError extends WebrpcError {
     name: string = 'CorsDisallowed',
     code: number = 1005,
     message: string = `CORS disallowed. JWT can't be used from a web app.`,
-    status: number = 0,
+    status: number = 403,
     cause?: string
   ) {
     super(name, code, message, status, cause)
