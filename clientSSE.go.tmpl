@@ -52,14 +52,9 @@ const sseResponse = async (
             lastReadTime = Date.now();
             buffer += decoder.decode(value, {stream: true});
         } catch (error) {
-            let message = "";
-            if (error instanceof Error) {
-                message = error.message;
-            }
-
             if (error instanceof DOMException && error.name === "AbortError") {
                 onError(
-                    WebrpcRequestFailedError.new({
+                    WebrpcClientAbortedError.new({
                         message: "AbortError",
                         cause: `AbortError: ${message}`,
                     }),
@@ -70,7 +65,7 @@ const sseResponse = async (
             } else {
                 onError(
                     WebrpcStreamLostError.new({
-                        cause: `reader.read(): ${message}`,
+                        cause: `reader.read(): ${error instanceof Error ? error.message : String(error)}`,
                     }),
                     retryFetch
                 );
@@ -107,8 +102,7 @@ const sseResponse = async (
                 onError(
                     WebrpcBadResponseError.new({
                         status: res.status,
-                        // @ts-ignore
-                        cause: `JSON.parse(): ${error.message}`,
+                        cause: `JSON.parse(): ${error instanceof Error ? error.message : String(error)}`,
                     }),
                     retryFetch
                 );

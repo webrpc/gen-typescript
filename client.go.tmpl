@@ -63,7 +63,7 @@ export class {{.Name}} implements {{.Name}} {
         {{- else }}return {}{{- end }}
       })
     }, (error) => {
-      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error.message || ''}` })
+      throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
     })
   }
   {{end -}}

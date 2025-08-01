@@ -22,13 +22,9 @@ const buildResponse = (res: Response): Promise<any> => {
     try {
       data = JSON.parse(text)
     } catch(error) {
-      let message = ''
-      if (error instanceof Error)  {
-        message = error.message
-      }
       throw WebrpcBadResponseError.new({
         status: res.status,
-        cause: `JSON.parse(): ${message}: response text: ${text}`},
+        cause: `JSON.parse(): ${error instanceof Error ? error.message : String(error)}: response text: ${text}`},
       )
     }
     if (!res.ok) {
@@ -76,7 +72,7 @@ export class {{$error.Name}}Error extends WebrpcError {
     name: string = '{{$error.Name}}',
     code: number = {{$error.Code}},
     message: string = `{{$error.Message}}`,
-    status: number = 0,
+    status: number = {{$error.HTTPStatus}},
     cause?: string
   ) {
     super(name, code, message, status, cause)
@@ -92,7 +88,7 @@ export class {{$error.Name}}Error extends WebrpcError {
     name: string = '{{$error.Name}}',
     code: number = {{$error.Code}},
     message: string = `{{$error.Message}}`,
-    status: number = 0,
+    status: number = {{$error.HTTPStatus}},
     cause?: string
   ) {
     super(name, code, message, status, cause)
