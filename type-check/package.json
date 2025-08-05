@@ -1,0 +1,12 @@
+{
+  "name": "webrpc-gen-typescript",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@tsconfig/strictest": "^2.0.5",
+    "typescript": "^5.9.2"
+  }
+}
