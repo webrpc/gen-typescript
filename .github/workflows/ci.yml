@@ -17,7 +17,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-         go-version: "1.23"
+          go-version: "1.23"
 
       - name: Install webrpc-gen (development)
         run: git clone --single-branch https://github.com/webrpc/webrpc.git --branch master && cd webrpc && make install
@@ -28,6 +28,17 @@ jobs:
       - name: Git diff of regenerated files
         run: cd _examples && make diff
 
+  typecheck:
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 22
+
+    - name: Install npm dependencies
+      run: cd typecheck && npm ci
+
+    - name: Type check generated TypeScript files
+      run: cd typecheck && npm run typecheck
 #  webrpc-tests:
 #    strategy:
 #      matrix:
