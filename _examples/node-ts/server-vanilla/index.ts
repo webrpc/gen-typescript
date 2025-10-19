@@ -10,9 +10,9 @@ import { randomUUID } from 'node:crypto'
 export interface RequestContext {
   id: string            // unique request id
   start: number         // timestamp when request started
-  url: string           // original URL
-  method: string        // HTTP method
-  headers: Record<string, string | string[] | undefined>
+  // url: string           // original URL
+  // method: string        // HTTP method
+  // headers: Record<string, string | string[] | undefined>
   // Arbitrary key/value bag for middleware & handlers
   data: Map<string, unknown>
   // AbortSignal that fires if client disconnects or server cancels work
@@ -30,9 +30,9 @@ function createRequestContext(req: IncomingMessage): RequestContext {
   const ctx: RequestContext = {
     id: randomUUID(),
     start,
-    url: urlObj.pathname + urlObj.search,
-    method: (req.method || 'GET').toUpperCase(),
-    headers: req.headers as Record<string, string | string[] | undefined>,
+    // url: urlObj.pathname + urlObj.search,
+    // method: (req.method || 'GET').toUpperCase(),
+    // headers: req.headers as Record<string, string | string[] | undefined>,
     data: new Map(),
     abort: controller.signal,
     req, // will be redefined as non-enumerable below
@@ -62,12 +62,12 @@ type ContextHandler = (ctx: RequestContext, req: IncomingMessage, res: ServerRes
 // --- Middleware: logging (context-aware) ---
 function withLogging<T extends ContextHandler>(next: T): ContextHandler {
   return async (ctx, req, res) => {
-    console.log(`[REQ ${ctx.id}] ${ctx.method} ${ctx.url}`)
+    console.log(`[REQ ${ctx.id}] ${ctx.req.method} ${ctx.req.url}`)
     try {
       await next(ctx, req, res)
     } finally {
       const duration = Date.now() - ctx.start
-      console.log(`[RES ${ctx.id}] ${ctx.method} ${ctx.url} -> ${res.statusCode} (${duration}ms)`)    
+      console.log(`[RES ${ctx.id}] ${ctx.req.method} ${ctx.req.url} -> ${res.statusCode} (${duration}ms)`)    
     }
   }
 }
@@ -83,10 +83,10 @@ function withTrace<T extends ContextHandler>(next: T): ContextHandler {
 
 // --- Main handler (context-aware) ---
 async function mainHandler(ctx: RequestContext, req: IncomingMessage, res: ServerResponse): Promise<void> {
-  const url = ctx.url
+  const url = ctx.req.url
 
   // First try RPC routing (/rpc/*)
-  if (url.startsWith('/rpc/')) {
+  if (url?.startsWith('/rpc/')) {
     // Under the hood the generated rpc handler doesn't know about ctx, but our
     // service implementations can access it through AsyncLocalStorage.
     const handled = await rpcHandler(req, res)
