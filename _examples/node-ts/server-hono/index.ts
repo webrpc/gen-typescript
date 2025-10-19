@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { logger } from 'hono/logger'
 import { serve } from '@hono/node-server'
 import type { Context as HonoContext } from 'hono'
 import { Kind, ExampleServer, handleExampleRpc } from "./server.gen"
@@ -12,34 +13,22 @@ import { randomUUID } from 'node:crypto'
 // Hono app setup
 const app = new Hono()
 
-// Middleware: enrich Hono Context with request metadata & tracing.
+// Built-in concise request logger (method/path/status/duration)
+app.use('*', logger())
+
+// Tracing + request id enrichment middleware
 app.use('*', async (c: HonoContext, next: () => Promise<void>) => {
-  const reqId = randomUUID()
-  const start = Date.now()
-  const path = c.req.path + (c.req.query() ? '?' + new URLSearchParams(c.req.query()).toString() : '')
-  c.set('reqId', reqId)
-  c.set('start', start)
-  c.set('path', path)
-  c.set('method', c.req.method.toUpperCase())
-  c.set('traceId', reqId)
-  console.log(`[REQ ${reqId}] ${c.req.method.toUpperCase()} ${path}`)
-  try {
-    await next()
-  } finally {
-    const duration = Date.now() - start
-    console.log(`[RES ${reqId}] ${c.req.method.toUpperCase()} ${path} (${duration}ms)`)    
-    c.res.headers.set('X-Trace-Id', reqId)
-  }
+  const traceId = randomUUID()
+  c.set('traceId', traceId)
+  await next()
+  c.res.headers.set('X-Trace-Id', traceId)
 })
-
-// Health route
-app.get('/health', (c: HonoContext) => c.json({ ok: true, time: new Date().toISOString(), reqId: c.get('reqId') }))
-
-// Simple JSON route
-app.get('/json', (c: HonoContext) => c.json({ ok: true, id: c.get('reqId'), traceId: c.get('traceId') }))
 
 // Root route
 app.get('/', (c: HonoContext) => c.text(`Hello world (req ${c.get('reqId')})`))
+
+// Health route
+app.get('/health', (c: HonoContext) => c.json({ ok: true, time: new Date().toISOString(), traceId: c.get('traceId'), reqId: c.get('reqId') }))
 
 // RPC mount (raw handler using generated helper)
 app.all('/rpc/*', async (c: HonoContext) => {
