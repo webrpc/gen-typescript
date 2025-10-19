@@ -8,8 +8,8 @@ const app = Fastify({ logger: true })
 
 // Implement webrpc service methods
 const exampleService: proto.ExampleServer = {
-  Ping: async () => ({}),
-  GetUser: async () => ({
+  ping: async () => ({}),
+  getUser: async () => ({
     code: 1,
     user: {
       id: 1,
@@ -18,7 +18,7 @@ const exampleService: proto.ExampleServer = {
       meta: {},
     },
   }),
-  GetArticle: async (req) => ({
+  getArticle: async (req) => ({
     title: 'Example Article #' + req.articleId,
     content: 'This is an example article fetched from the server.',
   }),

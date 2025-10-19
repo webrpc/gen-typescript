@@ -96,7 +96,7 @@ export interface GetArticleResponse {
     content?: string
 }
 
-export interface Example {
+export interface ExampleClient {
     /**
      * @deprecated Use /health endpoint instead.
      */
@@ -141,10 +141,10 @@ export interface GetUserReturn {
 // Server
 //
 
-export type ExampleServer = {
-    Ping(args: PingArgs): Promise<PingReturn>
-    GetUser(args: GetUserArgs): Promise<GetUserReturn>
-    GetArticle(req: GetArticleRequest): Promise<GetArticleResponse>
+export interface ExampleServer {
+    ping(args: PingArgs): Promise<PingReturn>
+    getUser(args: GetUserArgs): Promise<GetUserReturn>
+    getArticle(req: GetArticleRequest): Promise<GetArticleResponse>
 }
 
 export class WebrpcError extends Error {
@@ -156,7 +156,6 @@ export class WebrpcError extends Error {
     }
 }
 
-
 const JS_TYPES = [
     "bigint",
     "boolean",
@@ -167,7 +166,6 @@ const JS_TYPES = [
     "symbol",
     "undefined"
 ]
-
 
 const validateKind = (value: any) => {
     if (!("USER" in value) || !validateType(value["USER"], "number")) {
@@ -258,15 +256,15 @@ const validateType = (value: any, type: string) => {
 const dispatchRequest = async (service: ExampleServer, method: string, payload: any) => {
     switch (method) {
         case 'Ping':
-            return service.Ping(payload || {})
+            return service.ping(payload || {})
         case 'GetUser':
             if (!payload || typeof payload.userId !== 'number') throw new WebrpcError('Missing or invalid argument `userId`', 400)
-            const userResp = await service.GetUser({ userId: payload.userId })
+            const userResp = await service.getUser({ userId: payload.userId })
             if (!userResp || typeof userResp.code !== 'number' || !userResp.user) throw new WebrpcError('internal', 500)
             return userResp
         case 'GetArticle':
             if (!payload || typeof payload.articleId !== 'number') throw new WebrpcError('Missing or invalid argument `articleId`', 400)
-            return service.GetArticle({ articleId: payload.articleId })
+            return service.getArticle({ articleId: payload.articleId })
         default:
             throw new WebrpcError('method not found', 404)
     }
