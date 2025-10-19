@@ -1,17 +1,15 @@
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import * as proto from './server.gen'
-import { createExampleHttpHandler, handleExampleRPC, WebrpcHeader } from './server.gen'
+import { handleExampleRpc, WebrpcHeader } from './server.gen'
 
 // Create fastify instance
 const app = Fastify({ logger: true })
 
-// We'll register plugins inside start() to avoid top-level await.
-
-// Implement service procedures.
+// Implement webrpc service methods
 const exampleService: proto.ExampleServer = {
-  Ping: () => ({}),
-  GetUser: () => ({
+  Ping: async () => ({}),
+  GetUser: async () => ({
     code: 1,
     user: {
       id: 1,
@@ -20,7 +18,7 @@ const exampleService: proto.ExampleServer = {
       meta: {},
     },
   }),
-  GetArticle: (req) => ({
+  GetArticle: async (req) => ({
     title: 'Example Article #' + req.articleId,
     content: 'This is an example article fetched from the server.',
   }),
@@ -28,11 +26,21 @@ const exampleService: proto.ExampleServer = {
 
 // Minimal Fastify route using generic resolver.
 app.post('/rpc/*', async (request, reply) => {
-  const out = await handleExampleRPC(exampleService, request.url, request.body)
+  const out = await handleExampleRpc(exampleService, request.url, request.body)
   if (!out) return reply.callNotFound()
   for (const [k, v] of Object.entries(out.headers)) reply.header(k, v as any)
   reply.status(out.status).send(out.body)
 })
+
+// NOTE, if you are using express for some reason (dont, fastify is better),
+// your handler would look something like this:
+// app.post(/^\/rpc\//, async (req, res) => {
+//   const out = await handleExampleRPC(exampleService, req.url, req.body)
+//   if (!out) return res.status(404).end()
+//   res.status(out.status)
+//   for (const [k, v] of Object.entries(out.headers)) res.setHeader(k, v)
+//   res.json(out.body)
+// })
 
 // Start server
 const start = async () => {

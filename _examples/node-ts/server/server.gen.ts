@@ -19,111 +19,113 @@ export const WebRPCSchemaVersion = "v1.0.0"
 export const WebRPCSchemaHash = "21701cae51b73d035bf2180831cdb38220bbbccc"
 
 type WebrpcGenVersions = {
-  webrpcGenVersion: string;
-  codeGenName: string;
-  codeGenVersion: string;
-  schemaName: string;
-  schemaVersion: string;
+    webrpcGenVersion: string;
+    codeGenName: string;
+    codeGenVersion: string;
+    schemaName: string;
+    schemaVersion: string;
 };
 
 export function VersionFromHeader(headers: Headers): WebrpcGenVersions {
-  const headerValue = headers.get(WebrpcHeader);
-  if (!headerValue) {
-    return {
-      webrpcGenVersion: "",
-      codeGenName: "",
-      codeGenVersion: "",
-      schemaName: "",
-      schemaVersion: "",
-    };
-  }
+    const headerValue = headers.get(WebrpcHeader);
+    if (!headerValue) {
+        return {
+            webrpcGenVersion: "",
+            codeGenName: "",
+            codeGenVersion: "",
+            schemaName: "",
+            schemaVersion: "",
+        };
+    }
 
-  return parseWebrpcGenVersions(headerValue);
+    return parseWebrpcGenVersions(headerValue);
 }
 
 function parseWebrpcGenVersions(header: string): WebrpcGenVersions {
-  const versions = header.split(";");
-  if (versions.length < 3) {
+    const versions = header.split(";");
+    if (versions.length < 3) {
+        return {
+            webrpcGenVersion: "",
+            codeGenName: "",
+            codeGenVersion: "",
+            schemaName: "",
+            schemaVersion: "",
+        };
+    }
+
+    const [_, webrpcGenVersion] = versions[0]!.split("@");
+    const [codeGenName, codeGenVersion] = versions[1]!.split("@");
+    const [schemaName, schemaVersion] = versions[2]!.split("@");
+
     return {
-      webrpcGenVersion: "",
-      codeGenName: "",
-      codeGenVersion: "",
-      schemaName: "",
-      schemaVersion: "",
+        webrpcGenVersion: webrpcGenVersion ?? "",
+        codeGenName: codeGenName ?? "",
+        codeGenVersion: codeGenVersion ?? "",
+        schemaName: schemaName ?? "",
+        schemaVersion: schemaVersion ?? "",
     };
-  }
-
-  const [_, webrpcGenVersion] = versions[0]!.split("@");
-  const [codeGenName, codeGenVersion] = versions[1]!.split("@");
-  const [schemaName, schemaVersion] = versions[2]!.split("@");
-
-  return {
-    webrpcGenVersion: webrpcGenVersion ?? "",
-    codeGenName: codeGenName ?? "",
-    codeGenVersion: codeGenVersion ?? "",
-    schemaName: schemaName ?? "",
-    schemaVersion: schemaVersion ?? "",
-  };
 }
 
 //
 // Types
 //
 
-
 export enum Kind {
-  USER = 'USER',
-  ADMIN = 'ADMIN'
+    USER = 'USER',
+    ADMIN = 'ADMIN'
 }
 
 export interface User {
-  id: number
-  USERNAME: string
-  role: Kind
-  meta: {[key: string]: any}
-  createdAt?: string
+    id: number
+    USERNAME: string
+    role: Kind
+    meta: { [key: string]: any }
+    createdAt?: string
 }
 
 export interface Page {
-  num: number
+    num: number
 }
 
 export interface GetArticleRequest {
-  articleId: number
+    articleId: number
 }
 
 export interface GetArticleResponse {
-  title: string
-  content?: string
+    title: string
+    content?: string
 }
 
 export interface Example {
-  /**
-   * @deprecated Use /health endpoint instead.
-   */
-  ping(headers?: object, signal?: AbortSignal): Promise<PingReturn>
-  /**
-   * GetUser returns a user by ID.
-   */
-  getUser(args: GetUserArgs, headers?: object, signal?: AbortSignal): Promise<GetUserReturn>
-  /**
-   * Get article by id.
-   */
-  getArticle(req: GetArticleRequest, headers?: object, signal?: AbortSignal): Promise<GetArticleResponse>
+    /**
+     * @deprecated Use /health endpoint instead.
+     */
+    ping(headers?: object, signal?: AbortSignal): Promise<PingReturn>
+    /**
+     * GetUser returns a user by ID.
+     */
+    getUser(args: GetUserArgs, headers?: object, signal?: AbortSignal): Promise<GetUserReturn>
+    /**
+     * Get article by id.
+     */
+    getArticle(req: GetArticleRequest, headers?: object, signal?: AbortSignal): Promise<GetArticleResponse>
 }
+
+// TODO: lets switch to names.. Request and Response suffixes ..? .. but maybe it'll break a lot of apps?
+// consider adding a flag here for it..? at generation time.. like --compat mode ..
 
 export interface PingArgs {
 }
 
-export interface PingReturn {  
+export interface PingReturn {
 }
 export interface GetUserArgs {
-  userId: number
+    userId: number
 }
 
 export interface GetUserReturn {
-  code: number
-  user: User  
+    code: number
+    user: User
 }
 // export interface GetArticleArgs {
 //   getArticleRequest: GetArticleRequest
@@ -134,226 +136,26 @@ export interface GetUserReturn {
 // }
 
 
-  
+
 //
 // Server
 //
 
-export class WebRPCError extends Error {
-    statusCode?: number
+export type ExampleServer = {
+    Ping(args: PingArgs): Promise<PingReturn>
+    GetUser(args: GetUserArgs): Promise<GetUserReturn>
+    GetArticle(req: GetArticleRequest): Promise<GetArticleResponse>
+}
 
+export class WebrpcError extends Error {
+    statusCode?: number
     constructor(msg: string = "error", statusCode?: number) {
         super("webrpc error: " + msg);
-
-        Object.setPrototypeOf(this, WebRPCError.prototype);
-
+        Object.setPrototypeOf(this, WebrpcError.prototype);
         this.statusCode = statusCode;
     }
 }
 
-// Vanilla Node.js HTTP handler (no framework dependency)
-
-        export type ExampleServer = {
-            
-                Ping: (args: PingArgs) => PingReturn | Promise<PingReturn>
-            
-                GetUser: (args: GetUserArgs) => GetUserReturn | Promise<GetUserReturn>
-            
-                GetArticle: (req: GetArticleRequest) => GetArticleResponse | Promise<GetArticleResponse>
-            
-        }
-
-        export const createExampleHandler = (service: ExampleServer) => {
-            return async (req: any, res: any) => {
-                const url = req.url || ''
-                if (req.method !== 'POST' || !url.startsWith('/rpc/')) {
-                    return
-                }
-                res.setHeader(WebrpcHeader, WebrpcHeaderValue);
-                let body = req.body
-                if (body === undefined) {
-                    let raw = ''
-                    try {
-                        await new Promise<void>((resolve, reject) => {
-                            req.on('data', (chunk: any) => { raw += chunk })
-                            req.on('end', () => resolve())
-                            req.on('error', reject)
-                        })
-                        body = raw.length ? JSON.parse(raw) : undefined
-                    } catch (_e) {
-                        res.statusCode = 400
-                        res.end('webrpc error: invalid json')
-                        return
-                    }
-                }
-                if (!body) {
-                    res.statusCode = 400
-                    res.end('webrpc error: missing body')
-                    return
-                }
-                switch(url) {
-                    
-
-                    case "/rpc/Example/Ping": {                        
-                        try {
-                            
-
-                            const response = await service["Ping"](body);
-
-                            
-
-                            res.statusCode = 200
-                            res.setHeader('Content-Type', 'application/json')
-                            res.end(JSON.stringify(response));
-                        } catch (err) {
-                            if (err instanceof WebRPCError) {
-                                const statusCode = err.statusCode || 400
-                                const message = err.message
-
-                                res.statusCode = statusCode
-                                res.setHeader('Content-Type', 'application/json')
-                                res.end(JSON.stringify({
-                                    msg: message,
-                                    status: statusCode,
-                                    code: ""
-                                }));
-
-                                return
-                            }
-
-                            if (err instanceof Error && err.message) {
-                                res.statusCode = 400
-                                res.end(err.message);
-
-                                return;
-                            }
-
-                            res.statusCode = 400
-                            res.end();
-                        }
-                    }
-
-                    return;
-                    
-
-                    case "/rpc/Example/GetUser": {                        
-                        try {
-                            
-                                    if (!("userId" in body)) {
-                                        throw new WebRPCError("Missing Argument `userId`")
-                                    }
-                                if ("userId" in body && !validateType(body["userId"], "number")) {
-                                    throw new WebRPCError("Invalid Argument: userId")
-                                }
-                            
-
-                            const response = await service["GetUser"](body);
-
-                            
-                                if (!("code" in response)) {
-                                    throw new WebRPCError("internal", 500);
-                                }
-                            
-                                if (!("user" in response)) {
-                                    throw new WebRPCError("internal", 500);
-                                }
-                            
-
-                            res.statusCode = 200
-                            res.setHeader('Content-Type', 'application/json')
-                            res.end(JSON.stringify(response));
-                        } catch (err) {
-                            if (err instanceof WebRPCError) {
-                                const statusCode = err.statusCode || 400
-                                const message = err.message
-
-                                res.statusCode = statusCode
-                                res.setHeader('Content-Type', 'application/json')
-                                res.end(JSON.stringify({
-                                    msg: message,
-                                    status: statusCode,
-                                    code: ""
-                                }));
-
-                                return
-                            }
-
-                            if (err instanceof Error && err.message) {
-                                res.statusCode = 400
-                                res.end(err.message);
-
-                                return;
-                            }
-
-                            res.statusCode = 400
-                            res.end();
-                        }
-                    }
-
-                    return;
-                    
-
-                    case "/rpc/Example/GetArticle": {                        
-                        try {
-                            
-                                //     if (!("getArticleRequest" in body)) {
-                                //         throw new WebRPCError("Missing Argument `getArticleRequest`")
-                                //     }
-                                // if ("getArticleRequest" in body && !validateType(body["getArticleRequest"], "GetArticleRequest")) {
-                                //     throw new WebRPCError("Invalid Argument: getArticleRequest")
-                                // }
-                            
-
-                            const response = await service["GetArticle"](body);
-
-                            
-                                // if (!("getArticleResponse" in response)) {
-                                //     throw new WebRPCError("internal", 500);
-                                // }
-                            
-
-                            res.statusCode = 200
-                            res.setHeader('Content-Type', 'application/json')
-                            res.end(JSON.stringify(response));
-                        } catch (err) {
-                            if (err instanceof WebRPCError) {
-                                const statusCode = err.statusCode || 400
-                                const message = err.message
-
-                                res.statusCode = statusCode
-                                res.setHeader('Content-Type', 'application/json')
-                                res.end(JSON.stringify({
-                                    msg: message,
-                                    status: statusCode,
-                                    code: ""
-                                }));
-
-                                return
-                            }
-
-                            if (err instanceof Error && err.message) {
-                                res.statusCode = 400
-                                res.end(err.message);
-
-                                return;
-                            }
-
-                            res.statusCode = 400
-                            res.end();
-                        }
-                    }
-
-                    return;
-                    
-
-                    default: {
-                        return
-                    }
-                }
-            }
-        };
-
-  
 
 const JS_TYPES = [
     "bigint",
@@ -367,134 +169,79 @@ const JS_TYPES = [
 ]
 
 
-    const validateKind = (value: any) => {
-        
-            
-                if (!("USER" in value) || !validateType(value["USER"], "number")) {
-                    return false
-                }
-            
-        
-            
-                if (!("ADMIN" in value) || !validateType(value["ADMIN"], "number")) {
-                    return false
-                }
-            
-        
-
-        return true
+const validateKind = (value: any) => {
+    if (!("USER" in value) || !validateType(value["USER"], "number")) {
+        return false
     }
-
-    const validateUser = (value: any) => {
-        
-            
-                if (!("id" in value) || !validateType(value["id"], "number")) {
-                    return false
-                }
-            
-        
-            
-                if (!("USERNAME" in value) || !validateType(value["USERNAME"], "string")) {
-                    return false
-                }
-            
-        
-            
-                if (!("role" in value) || !validateType(value["role"], "Kind")) {
-                    return false
-                }
-            
-        
-            
-                if (!("meta" in value) || !validateType(value["meta"], "object")) {
-                    return false
-                }
-            
-        
-            
-                if (!("-" in value) || !validateType(value["-"], "number")) {
-                    return false
-                }
-            
-        
-            
-                if ("createdAt" in value && !validateType(value["createdAt"], "string")) {
-                    return false
-                }
-            
-        
-
-        return true
+    if (!("ADMIN" in value) || !validateType(value["ADMIN"], "number")) {
+        return false
     }
+    return true
+}
 
-    const validatePage = (value: any) => {
-        
-            
-                if (!("num" in value) || !validateType(value["num"], "number")) {
-                    return false
-                }
-            
-        
-
-        return true
+const validateUser = (value: any) => {
+    if (!("id" in value) || !validateType(value["id"], "number")) {
+        return false
     }
-
-    const validateGetArticleRequest = (value: any) => {
-        
-            
-                if (!("articleId" in value) || !validateType(value["articleId"], "number")) {
-                    return false
-                }
-            
-        
-
-        return true
+    if (!("USERNAME" in value) || !validateType(value["USERNAME"], "string")) {
+        return false
     }
-
-    const validateGetArticleResponse = (value: any) => {
-        
-            
-                if (!("title" in value) || !validateType(value["title"], "string")) {
-                    return false
-                }
-            
-        
-            
-                if ("content" in value && !validateType(value["content"], "string")) {
-                    return false
-                }
-            
-        
-
-        return true
+    if (!("role" in value) || !validateType(value["role"], "Kind")) {
+        return false
     }
+    if (!("meta" in value) || !validateType(value["meta"], "object")) {
+        return false
+    }
+    if (!("-" in value) || !validateType(value["-"], "number")) {
+        return false
+    }
+    if ("createdAt" in value && !validateType(value["createdAt"], "string")) {
+        return false
+    }
+    return true
+}
+
+const validatePage = (value: any) => {
+    if (!("num" in value) || !validateType(value["num"], "number")) {
+        return false
+    }
+    return true
+}
+
+const validateGetArticleRequest = (value: any) => {
+    if (!("articleId" in value) || !validateType(value["articleId"], "number")) {
+        return false
+    }
+    return true
+}
+
+const validateGetArticleResponse = (value: any) => {
+    if (!("title" in value) || !validateType(value["title"], "string")) {
+        return false
+    }
+    if ("content" in value && !validateType(value["content"], "string")) {
+        return false
+    }
+    return true
+}
 
 
 const TYPE_VALIDATORS: { [type: string]: (value: any) => boolean } = {
-    
-        Kind: validateKind,
-    
-        User: validateUser,
-    
-        Page: validatePage,
-    
-        GetArticleRequest: validateGetArticleRequest,
-    
-        GetArticleResponse: validateGetArticleResponse,
-    
+    Kind: validateKind,
+    User: validateUser,
+    Page: validatePage,
+    GetArticleRequest: validateGetArticleRequest,
+    GetArticleResponse: validateGetArticleResponse,
 }
 
 const validateType = (value: any, type: string) => {
     if (JS_TYPES.indexOf(type) > -1) {
         return typeof value === type;
     }
-
     const validator = TYPE_VALIDATORS[type];
-
     if (!validator) {
         return false;
     }
-
     return validator(value);
 }
 
@@ -506,94 +253,34 @@ const validateType = (value: any, type: string) => {
 // shims. They intentionally keep validation minimal – just presence/type checks
 // similar to the original generated logic.
 
-type ExampleMethodName = 'Ping' | 'GetUser' | 'GetArticle'
-
-export interface WebrpcHttpHandler {
-    (req: { method?: string; url?: string; headers?: any; body?: any; on?(ev: string, cb: (chunk?: any) => void): void },
-     res: { statusCode?: number; setHeader(k: string, v: any): void; end(payload?: any): void }): Promise<void> | void
-}
 
 // Small pure dispatcher (no framework concepts)
-export const dispatchExample = async (service: ExampleServer, method: ExampleMethodName, payload: any) => {
+const dispatchRequest = async (service: ExampleServer, method: string, payload: any) => {
     switch (method) {
         case 'Ping':
             return service.Ping(payload || {})
         case 'GetUser':
-            if (!payload || typeof payload.userId !== 'number') throw new WebRPCError('Missing or invalid argument `userId`', 400)
+            if (!payload || typeof payload.userId !== 'number') throw new WebrpcError('Missing or invalid argument `userId`', 400)
             const userResp = await service.GetUser({ userId: payload.userId })
-            if (!userResp || typeof userResp.code !== 'number' || !userResp.user) throw new WebRPCError('internal', 500)
+            if (!userResp || typeof userResp.code !== 'number' || !userResp.user) throw new WebrpcError('internal', 500)
             return userResp
         case 'GetArticle':
-            if (!payload || typeof payload.articleId !== 'number') throw new WebRPCError('Missing or invalid argument `articleId`', 400)
+            if (!payload || typeof payload.articleId !== 'number') throw new WebrpcError('Missing or invalid argument `articleId`', 400)
             return service.GetArticle({ articleId: payload.articleId })
         default:
-            throw new WebRPCError('method not found', 404)
-    }
-}
-
-// Generic Node-style http handler (req,res) usable in native http, Fastify (via app.route/app.post) or Express (app.post('*', handler)) without any library imports here.
-export const createExampleHttpHandler = (service: ExampleServer): WebrpcHttpHandler => {
-    return async (req, res) => {
-        const url = req.url || ''
-        if (req.method !== 'POST' || !url.startsWith('/rpc/')) {
-            return // let outer framework decide 404
-        }
-        // /rpc/Example/MethodName
-        const parts = url.split('/').filter(Boolean)
-        if (parts.length !== 3 || parts[1] !== 'Example') {
-            return
-        }
-        const method = parts[2] as ExampleMethodName
-        res.setHeader(WebrpcHeader, WebrpcHeaderValue)
-
-        let body = req.body
-        if (body === undefined) {
-            // Try to read raw stream (native http scenario)
-            let raw = ''
-            try {
-                await new Promise<void>((resolve, reject) => {
-                    if (!req.on) return resolve()
-                    req.on('data', (chunk: any) => { raw += chunk })
-                    req.on('end', () => resolve())
-                    req.on('error', reject)
-                })
-                body = raw.length ? JSON.parse(raw) : {}
-            } catch {
-                res.statusCode = 400
-                res.end('webrpc error: invalid json')
-                return
-            }
-        }
-
-        try {
-            const result = await dispatchExample(service, method, body)
-            res.statusCode = 200
-            res.setHeader('Content-Type', 'application/json')
-            res.end(JSON.stringify(result ?? {}))
-        } catch (err: any) {
-            if (err instanceof WebRPCError) {
-                const status = err.statusCode || 400
-                res.statusCode = status
-                res.setHeader('Content-Type', 'application/json')
-                res.end(JSON.stringify({ msg: err.message, status, code: '' }))
-                return
-            }
-            res.statusCode = 400
-            res.setHeader('Content-Type', 'application/json')
-            res.end(JSON.stringify({ msg: err?.message || 'webrpc error', status: 400, code: '' }))
-        }
+            throw new WebrpcError('method not found', 404)
     }
 }
 
 // Ultra-thin helper: given full URL and body, resolve & execute if it's an Example RPC.
 // Returns null if the URL does not target the Example service (so caller can 404).
-export const handleExampleRPC = async (service: ExampleServer, methodUrl: string, body: any) => {
+export const handleExampleRpc = async (service: ExampleServer, methodUrl: string, body: any) => {
     if (!methodUrl.startsWith('/rpc/')) return null
     const parts = methodUrl.split('/').filter(Boolean)
     if (parts.length !== 3 || parts[0] !== 'rpc' || parts[1] !== 'Example') return null
-    const method = parts[2] as ExampleMethodName
+    const method = parts[2]
     try {
-        const result = await dispatchExample(service, method, body)
+        const result = await dispatchRequest(service, method, body)
         return {
             method,
             status: 200,
@@ -601,7 +288,7 @@ export const handleExampleRPC = async (service: ExampleServer, methodUrl: string
             body: result ?? {}
         }
     } catch (err: any) {
-        if (err instanceof WebRPCError) {
+        if (err instanceof WebrpcError) {
             const status = err.statusCode || 400
             return {
                 method,
