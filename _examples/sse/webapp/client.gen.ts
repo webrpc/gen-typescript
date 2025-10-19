@@ -9,14 +9,14 @@ export const WebrpcHeader = "Webrpc"
 
 export const WebrpcHeaderValue = "webrpc@v0.28.1-1-ge2b37ad;@unknown;webrpc-sse-chat@v1.0.0"
 
-// WebRPC description and code-gen version
-export const WebRPCVersion = "v1"
+// Webrpc description and code-gen version
+export const WebrpcVersion = "v1"
 
 // Schema version of your RIDL schema
-export const WebRPCSchemaVersion = "v1.0.0"
+export const WebrpcSchemaVersion = "v1.0.0"
 
 // Schema hash generated from your RIDL schema
-export const WebRPCSchemaHash = "a799dc63b082644f5d003c8881424546aee23a2c"
+export const WebrpcSchemaHash = "a799dc63b082644f5d003c8881424546aee23a2c"
 
 type WebrpcGenVersions = {
   webrpcGenVersion: string;
