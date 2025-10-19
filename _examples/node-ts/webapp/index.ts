@@ -1,68 +1,77 @@
-import {ExampleService, VersionFromHeader, WebrpcError, WebrpcHeader} from './client.gen'
+import {ExampleClient, VersionFromHeader, WebrpcError, WebrpcHeader} from './client.gen'
 
 const fetchWithWebrpcHeaderParsing = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-	if (init && init.headers) {
-		console.log("client headers", VersionFromHeader(new Headers(init.headers)))
+	if (init?.headers) {
+		console.log('client headers', VersionFromHeader(new Headers(init.headers)))
 	}
-
 	const res = await fetch(input, init)
-
-	console.log("server headers", res.headers.get(WebrpcHeader))
-
-	return new Promise(() => {
-		return res
-	})
+	console.log('server headers', res.headers.get(WebrpcHeader))
+	return res
 }
 
-const exampleService = new ExampleService('http://localhost:3000', fetchWithWebrpcHeaderParsing)
+const exampleClient = new ExampleClient('http://localhost:3000', fetchWithWebrpcHeaderParsing)
+
+async function onPingClick(pingText: HTMLElement) {
+	try {
+		await exampleClient.ping({})
+		pingText.textContent = 'PONG'
+	} catch (error) {
+		if (error instanceof WebrpcError) {
+			console.error(error)
+			pingText.textContent = `error: ${error.message}, cause: ${error.cause}`
+		}
+	}
+}
+
+async function onGetUserClick(usernameText: HTMLElement) {
+	try {
+		const { user } = await exampleClient.getUser({ userId: 1 })
+		console.log('getUser() responded with:', { user })
+		usernameText.textContent = user.USERNAME
+	} catch (error) {
+		if (error instanceof WebrpcError) {
+			console.error(error)
+			usernameText.textContent = `error: ${error.message}, cause: ${error.cause}`
+		}
+	}
+}
+
+async function onGetArticleClick(articleText: HTMLElement) {
+	try {
+		const article = await exampleClient.getArticle({ articleId: 1 })
+		console.log('getArticle() responded with:', { article })
+		articleText.textContent = `Title: ${article.title}\n\nContent: ${article.content}`
+	} catch (error) {
+		if (error instanceof WebrpcError) {
+			console.error(error)
+			articleText.textContent = `error: ${error.message}, cause: ${error.cause}`
+		}
+	}
+}
 
 document.addEventListener('DOMContentLoaded', () => {
 	const pingButton = document.getElementById('js-ping-btn')
 	const pingText = document.getElementById('js-ping-text')
+	const getUserButton = document.getElementById('js-get-user-btn')
+	const usernameText = document.getElementById('js-username-text')
+	const getArticleButton = document.getElementById('js-get-article-btn')
+	const articleText = document.getElementById('js-article-text')
 
 	if (!pingButton || !pingText) {
 		console.log('error getting ping HTML elements')
-		return
+	} else {
+		pingButton.addEventListener('click', () => onPingClick(pingText))
 	}
-
-	pingButton.addEventListener('click', () => {
-		exampleService
-			.ping({})
-			.then(({}) => {
-				pingText.textContent = 'PONG'
-			})
-			.catch((error) => {
-				if (error as WebrpcError) {
-					console.error(error)
-					pingText.textContent = `error: ${error.message}, cause: ${error.cause}`
-				}
-			})
-	})
-})
-
-document.addEventListener('DOMContentLoaded', () => {
-	const getUserButton = document.getElementById('js-get-user-btn')
-	const usernameText = document.getElementById('js-username-text')
 
 	if (!getUserButton || !usernameText) {
 		console.log('error getting username HTML elements')
-		return
+	} else {
+		getUserButton.addEventListener('click', () => onGetUserClick(usernameText))
 	}
 
-	getUserButton.addEventListener('click', () => {
-		exampleService
-			.getUser({
-				userID: 1,
-			})
-			.then(({ user }) => {
-				console.log('getUser() responded with:', { user })
-				usernameText.textContent = user.USERNAME
-			})
-			.catch((error) => {
-				if (error as WebrpcError) {
-					console.error(error)
-					usernameText.textContent = `error: ${error.message}, cause: ${error.cause}`
-				}
-			})
-	})
+	if (!getArticleButton || !articleText) {
+		console.log('error getting article HTML elements')
+	} else {
+		getArticleButton.addEventListener('click', () => { void onGetArticleClick(articleText) })
+	}
 })

@@ -1,41 +1,54 @@
-import express from 'express'
+import Fastify from 'fastify'
+import cors from '@fastify/cors'
 import * as proto from './server.gen'
-import {createExampleServiceApp, WebrpcHeader} from './server.gen'
+import { createExampleHttpHandler, handleExampleRPC, WebrpcHeader } from './server.gen'
 
-const app = express()
+// Create fastify instance
+const app = Fastify({ logger: true })
 
-app.use((req, res, next) => {
-	res.setHeader('Access-Control-Allow-Origin', '*')
-	res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
-	res.setHeader('Access-Control-Allow-Headers', `Content-Type, ${WebrpcHeader}`)
-	res.setHeader('Access-Control-Expose-Headers', `Content-Type, ${WebrpcHeader}`)
+// We'll register plugins inside start() to avoid top-level await.
 
-	if (req.method === 'OPTIONS') {
-		res.status(200).end()
-		return
+// Implement service procedures.
+const exampleService: proto.ExampleServer = {
+  Ping: () => ({}),
+  GetUser: () => ({
+    code: 1,
+    user: {
+      id: 1,
+      USERNAME: 'webrpcfan',
+      role: proto.Kind.ADMIN,
+      meta: {},
+    },
+  }),
+  GetArticle: (req) => ({
+    title: 'Example Article #' + req.articleId,
+    content: 'This is an example article fetched from the server.',
+  }),
+}
+
+// Minimal Fastify route using generic resolver.
+app.post('/rpc/*', async (request, reply) => {
+  const out = await handleExampleRPC(exampleService, request.url, request.body)
+  if (!out) return reply.callNotFound()
+  for (const [k, v] of Object.entries(out.headers)) reply.header(k, v as any)
+  reply.status(out.status).send(out.body)
+})
+
+// Start server
+const start = async () => {
+	try {
+		await app.register(cors, {
+			origin: true,
+			methods: ['POST', 'GET', 'OPTIONS'],
+			allowedHeaders: ['Content-Type', WebrpcHeader],
+			exposedHeaders: ['Content-Type', WebrpcHeader]
+		})
+		await app.listen({ port: 3000, host: '0.0.0.0' })
+		console.log('> Listening on port 3000')
+	} catch (err) {
+		app.log.error(err)
+		process.exit(1)
 	}
+}
 
-	next()
-})
-
-const exampleServiceApp = createExampleServiceApp({
-	Ping: () => {
-		return {}
-	},
-
-	GetUser: () => ({
-		code: 1,
-		user: {
-			id: 1,
-			USERNAME: 'webrpcfan',
-			role: proto.Kind.ADMIN,
-			meta: {},
-		},
-	}),
-})
-
-app.use(exampleServiceApp)
-
-app.listen(3000, () => {
-	console.log('> Listening on port 3000')
-})
+start()
