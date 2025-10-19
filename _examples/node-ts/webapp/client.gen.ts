@@ -97,15 +97,17 @@ export interface GetArticleResponse {
   content?: string
 }
 
-export interface Example {
+export interface ExampleClient {
   /**
    * @deprecated Use /health endpoint instead.
    */
   ping(headers?: object, signal?: AbortSignal): Promise<PingReturn>
+
   /**
    * GetUser returns a user by ID.
    */
   getUser(args: GetUserArgs, headers?: object, signal?: AbortSignal): Promise<GetUserReturn>
+  
   /**
    * Get article by id.
    */
@@ -138,7 +140,7 @@ export interface GetUserReturn {
 //
 // Client
 //
-export class ExampleClient implements Example {
+export class Example implements ExampleClient {
   protected hostname: string
   protected fetch: Fetch
   protected path = '/rpc/Example/'
@@ -239,6 +241,7 @@ export class WebrpcError extends Error {
   cause?: string
 
   /** @deprecated Use message instead of msg. Deprecated in webrpc v0.11.0. */
+  // TODO: its time to get rid of this now.
   msg: string
 
   constructor(name: string, code: number, message: string, status: number, cause?: string) {

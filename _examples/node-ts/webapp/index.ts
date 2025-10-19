@@ -1,4 +1,4 @@
-import {ExampleClient, VersionFromHeader, WebrpcError, WebrpcHeader} from './client.gen'
+import {Example, VersionFromHeader, WebrpcError, WebrpcHeader} from './client.gen'
 
 const fetchWithWebrpcHeaderParsing = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
 	if (init?.headers) {
@@ -9,7 +9,7 @@ const fetchWithWebrpcHeaderParsing = async (input: RequestInfo | URL, init?: Req
 	return res
 }
 
-const exampleClient = new ExampleClient('http://localhost:3000', fetchWithWebrpcHeaderParsing)
+const exampleClient = new Example('http://localhost:3000', fetchWithWebrpcHeaderParsing)
 
 async function onPingClick(pingText: HTMLElement) {
 	try {

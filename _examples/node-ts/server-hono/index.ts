@@ -1,7 +1,8 @@
 import { Hono } from 'hono'
-import { logger } from 'hono/logger'
-import { serve } from '@hono/node-server'
 import type { Context } from 'hono'
+import { serve } from '@hono/node-server'
+import { logger } from 'hono/logger'
+import { cors } from 'hono/cors'
 import { ExampleServer, handleExampleRpc, Kind } from './server.gen'
 import { randomUUID } from 'node:crypto'
 
@@ -32,6 +33,16 @@ app.use('*', async (c: RequestContext, next: () => Promise<void>) => {
   await next()
   c.res.headers.set('X-Trace-Id', traceId)
 })
+
+// CORS middleware (simple manual implementation). Adjust origins as needed.
+app.use('*', cors({
+  origin: (origin) => origin ?? '*',
+  allowMethods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+  allowHeaders: ['Content-Type','Authorization','Webrpc'],
+  exposeHeaders: [],
+  credentials: true,
+  maxAge: 86400
+}))
 
 // Root route
 app.get('/', (c: RequestContext) => c.text(`Hello world (req ${c.var.traceId})`))
