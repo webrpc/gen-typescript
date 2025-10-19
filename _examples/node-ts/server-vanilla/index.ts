@@ -17,6 +17,8 @@ export interface RequestContext {
   data: Map<string, unknown>
   // AbortSignal that fires if client disconnects or server cancels work
   abort: AbortSignal
+  // Raw IncomingMessage reference (non-enumerable when attached)
+  req: IncomingMessage
   set<T = unknown>(key: string, value: T): void
   get<T = unknown>(key: string): T | undefined
 }
@@ -33,10 +35,12 @@ function createRequestContext(req: IncomingMessage): RequestContext {
     headers: req.headers as Record<string, string | string[] | undefined>,
     data: new Map(),
     abort: controller.signal,
+    req, // will be redefined as non-enumerable below
     set(key, value) { this.data.set(key, value) },
     get(key) { return this.data.get(key) as any },
   }
-  // Attach controller so creator can abort on disconnect (non-enumerable to keep ctx lean when serialized)
+  // Make req & controller non-enumerable to avoid circular refs / noisy logs
+  Object.defineProperty(ctx, 'req', { value: req, enumerable: false, writable: false })
   Object.defineProperty(ctx, '_controller', { value: controller, enumerable: false, writable: false })
   return ctx
 }
@@ -44,7 +48,7 @@ function createRequestContext(req: IncomingMessage): RequestContext {
 // Augment IncomingMessage so app code could also access req.ctx directly if desired.
 declare module 'node:http' {
   interface IncomingMessage {
-    ctx?: RequestContext
+    ctx: RequestContext
   }
 }
 

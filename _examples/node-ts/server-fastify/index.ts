@@ -5,10 +5,7 @@ import { Kind, ExampleServer, handleExampleRpc } from './server.gen'
 // ---------------------------------------------------------------------------
 // Request Context Implementation
 // ---------------------------------------------------------------------------
-// We use AsyncLocalStorage to provide a per-request context accessible from
-// anywhere in the call stack (including service methods) without altering the
-// generated server handler signatures. This mimics the pattern commonly used in
-// Go, Express, Fastify, etc.
+// This mimics the pattern commonly used in Go, Express, Fastify, etc.
 
 export interface RequestContext {
   id: string
@@ -20,6 +17,9 @@ export interface RequestContext {
   bag: Map<string, unknown>
   set<T = unknown>(key: string, value: T): void
   get<T = unknown>(key: string): T | undefined
+
+  // Reference to underlying FastifyRequest for access in RPC/service layer
+  req: FastifyRequest
 }
 
 declare module 'fastify' {
@@ -33,7 +33,7 @@ function buildRequestContext(req: FastifyRequest): RequestContext {
   const id = (++reqCounter).toString(36)
   const traceId = id // simple reuse; could use crypto.randomUUID()
   const bag = new Map<string, unknown>()
-  return {
+  const ctx: RequestContext = {
     id,
     traceId,
     start: Date.now(),
@@ -41,9 +41,13 @@ function buildRequestContext(req: FastifyRequest): RequestContext {
     method: (req.method || 'GET').toUpperCase(),
     headers: req.headers as Record<string, string | string[] | undefined>,
     bag,
+    req,
     set(key, value) { this.bag.set(key, value) },
     get(key) { return this.bag.get(key) as any },
   }
+  // Redefine req as non-enumerable to avoid accidental JSON stringification loops
+  Object.defineProperty(ctx, 'req', { value: req, enumerable: false, writable: false })
+  return ctx
 }
 
 // ---------------------------------------------------------------------------
@@ -67,7 +71,7 @@ async function mainHandler(req: FastifyRequest, reply: FastifyReply): Promise<vo
 // ---------------------------------------------------------------------------
 const exampleService: ExampleServer<RequestContext> = {
   async ping(ctx) {
-    ctx.set('pingedAt', new Date().toISOString())
+    console.log('ping from request', ctx.req.url)
     return {}
   },
   async getUser(ctx, { userId }) {
