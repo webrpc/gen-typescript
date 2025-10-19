@@ -1,6 +1,8 @@
 import Fastify from 'fastify'
 import type { FastifyRequest, FastifyReply, FastifyError, FastifyPluginCallback } from 'fastify'
+import cors from '@fastify/cors'
 import { Kind, ExampleServer, handleExampleRpc } from './server.gen'
+import { randomUUID } from 'node:crypto'
 
 // ---------------------------------------------------------------------------
 // Request Context Implementation
@@ -8,11 +10,7 @@ import { Kind, ExampleServer, handleExampleRpc } from './server.gen'
 // This mimics the pattern commonly used in Go, Express, Fastify, etc.
 
 export interface RequestContext {
-  id: string
   start: number
-  url: string
-  method: string
-  headers: Record<string, string | string[] | undefined>
   traceId: string
   bag: Map<string, unknown>
   set<T = unknown>(key: string, value: T): void
@@ -28,23 +26,16 @@ declare module 'fastify' {
   }
 }
 
-let reqCounter = 0
-function buildRequestContext(req: FastifyRequest): RequestContext {
-  const id = (++reqCounter).toString(36)
-  const traceId = id // simple reuse; could use crypto.randomUUID()
-  const bag = new Map<string, unknown>()
+const buildRequestContext = (req: FastifyRequest): RequestContext => {
   const ctx: RequestContext = {
-    id,
-    traceId,
+    traceId: randomUUID(),
     start: Date.now(),
-    url: req.url || '/',
-    method: (req.method || 'GET').toUpperCase(),
-    headers: req.headers as Record<string, string | string[] | undefined>,
-    bag,
-    req,
+    bag: new Map<string, unknown>(),
     set(key, value) { this.bag.set(key, value) },
     get(key) { return this.bag.get(key) as any },
+    req,
   }
+
   // Redefine req as non-enumerable to avoid accidental JSON stringification loops
   Object.defineProperty(ctx, 'req', { value: req, enumerable: false, writable: false })
   return ctx
@@ -52,14 +43,14 @@ function buildRequestContext(req: FastifyRequest): RequestContext {
 
 // ---------------------------------------------------------------------------
 // --- Main handler (uses request.ctx directly) ---
-async function mainHandler(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+const mainHandler = async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
   const ctx = req.ctx
-  switch (ctx.url) {
+  switch (req.url) {
     case '/':
-      reply.type('text/plain').send(`Hello world (req ${ctx.id})\n`)
+      reply.type('text/plain').send(`Hello world (req ${ctx.traceId})\n`)
       return
     case '/json':
-      reply.send({ ok: true, time: new Date().toISOString(), reqId: ctx.id })
+      reply.send({ ok: true, time: new Date().toISOString(), traceId: ctx.traceId })
       return
     default:
       reply.code(404).type('text/plain').send('Not Found\n')
@@ -88,7 +79,7 @@ const exampleService: ExampleServer<RequestContext> = {
   async getArticle(ctx, { articleId }) {
     return {
       title: `Article ${articleId}`,
-      content: `Hello, this is the content for article ${articleId}. (req ${ctx.id})`
+      content: `Hello, this is the content for article ${articleId}. (req ${ctx.traceId})`
     }
   }
 }
@@ -101,19 +92,19 @@ const app = Fastify({ logger: { level: 'info' } })
 app.decorateRequest('ctx', null as any)
 app.addHook('onRequest', (req, reply, done) => {
   req.ctx = buildRequestContext(req)
-  reply.header('X-Req-Id', req.ctx.id)
+  reply.header('X-Trace-Id', req.ctx.traceId)
   done()
 })
 
 // Custom trace plugin example (just ensures a trace header is surfaced)
-const tracePlugin: FastifyPluginCallback = (instance, _opts, done) => {
-  instance.addHook('preHandler', (req, reply, next) => {
-    reply.header('X-Trace-Id', req.ctx.traceId)
-    next()
-  })
-  done()
-}
-app.register(tracePlugin)
+// const tracePlugin: FastifyPluginCallback = (instance, _opts, done) => {
+//   instance.addHook('preHandler', (req, reply, next) => {
+//     reply.header('X-Trace-Id', req.ctx.traceId)
+//     next()
+//   })
+//   done()
+// }
+// app.register(tracePlugin)
 
 // RPC route handler (covers /rpc/Example/*) supporting common HTTP verbs
 app.route({
@@ -135,7 +126,7 @@ app.get('/', async (req, reply) => { await mainHandler(req, reply) })
 
 // Common health endpoint (also deprecates original ping message comment)
 app.get('/health', async (req: FastifyRequest, reply: FastifyReply) => {
-  reply.send({ ok: true, time: new Date().toISOString(), reqId: req.ctx.id })
+  reply.send({ ok: true, time: new Date().toISOString(), reqId: req.ctx.traceId })
 })
 
 app.get('/json', async (req, reply) => { await mainHandler(req, reply) })
@@ -148,13 +139,21 @@ app.setNotFoundHandler((req, reply) => {
 // Global error handler – maps any thrown FastifyError to structured JSON
 app.setErrorHandler(function errorHandler(err: FastifyError, req, reply) {
   const status = (err.statusCode && err.statusCode >= 400) ? err.statusCode : 500
-  req.log.error({ err, reqId: req.ctx?.id }, 'request error')
-  reply.code(status).send({ msg: 'internal error', reqId: req.ctx?.id, error: err.message })
+  req.log.error({ err, reqId: req.ctx?.traceId }, 'request error')
+  reply.code(status).send({ msg: 'internal error', reqId: req.ctx?.traceId, error: err.message })
 })
 
 // Prefer explicit async startup sequence to handle errors clearly.
 ;(async () => {
   try {
+    await app.register(cors, {
+      origin: true,
+      credentials: true,
+      methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+      allowedHeaders: ['Content-Type','Authorization','Webrpc'],
+      exposedHeaders: ['X-Trace-Id'],
+      maxAge: 86400
+    })
     await app.listen({ port: 3000 })
     app.log.info('Fastify server running at http://localhost:3000/')
   } catch (err) {
