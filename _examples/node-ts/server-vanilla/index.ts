@@ -1,15 +1,11 @@
 import http, { IncomingMessage, ServerResponse } from "node:http"
-import { AsyncLocalStorage } from "node:async_hooks"
 import { Kind, ExampleServer, createNodeHttpExampleHandler } from "./server.gen"
 import { randomUUID } from 'node:crypto'
 
 // ---------------------------------------------------------------------------
 // Request Context Implementation
 // ---------------------------------------------------------------------------
-// We use AsyncLocalStorage to provide a per-request context accessible from
-// anywhere in the call stack (including service methods) without altering the
-// generated server handler signatures. This mimics the pattern commonly used in
-// Go, Express, Fastify, etc.
+// This mimics the pattern commonly used in Go, Express, Fastify, etc.
 
 export interface RequestContext {
   id: string            // unique request id
@@ -24,14 +20,6 @@ export interface RequestContext {
   set<T = unknown>(key: string, value: T): void
   get<T = unknown>(key: string): T | undefined
 }
-
-const requestContextStorage = new AsyncLocalStorage<RequestContext>()
-
-export function getRequestContext(): RequestContext {
-  return requestContextStorage.getStore()!
-}
-
-const TRACE_ID = Symbol('traceId')
 
 function createRequestContext(req: IncomingMessage): RequestContext {
   const start = Date.now()
@@ -61,7 +49,7 @@ declare module 'node:http' {
 }
 
 // ---------------------------------------------------------------------------
-// Middleware signature with context
+// Middleware signature with context (pure, explicit)
 // ---------------------------------------------------------------------------
 type ContextHandler = (ctx: RequestContext, req: IncomingMessage, res: ServerResponse) => Promise<void> | void
 
@@ -83,7 +71,7 @@ function withLogging<T extends ContextHandler>(next: T): ContextHandler {
 // --- Middleware: simple trace id header example ---
 function withTrace<T extends ContextHandler>(next: T): ContextHandler {
   return async (ctx, req, res) => {
-    ctx.set(TRACE_ID.toString(), ctx.id) // or store the symbol directly
+    ctx.set('traceId'.toString(), ctx.id) // or store the symbol directly
     await next(ctx, req, res)
     res.setHeader('X-Trace-Id', ctx.id)
   }
@@ -121,16 +109,12 @@ async function mainHandler(ctx: RequestContext, req: IncomingMessage, res: Serve
 // ---------------------------------------------------------------------------
 // ExampleServer implementation (in-memory demo)
 // ---------------------------------------------------------------------------
-const exampleService: ExampleServer = {
-  async ping() { 
-    // Demonstrate ctx access inside service
-    const ctx = getRequestContext()
+const exampleService: ExampleServer<RequestContext> = {
+  async ping(ctx) {
     ctx.set('pingedAt', new Date().toISOString())
-    return {} 
+    return {}
   },
-  async getUser({ userId }) {
-    const ctx = getRequestContext()
-    // Fake user
+  async getUser(ctx, { userId }) {
     return {
       code: 200,
       user: {
@@ -141,8 +125,7 @@ const exampleService: ExampleServer = {
       }
     }
   },
-  async getArticle({ articleId }) {
-    const ctx = getRequestContext()
+  async getArticle(ctx, { articleId }) {
     return {
       title: `Article ${articleId}`,
       content: `Hello, this is the content for article ${articleId}. (req ${ctx.id})`
@@ -150,8 +133,8 @@ const exampleService: ExampleServer = {
   }
 }
 
-// Create RPC handler using generated helper
-const rpcHandler = createNodeHttpExampleHandler(exampleService)
+// RPC handler factory – we capture the ctx created per request and supply it directly.
+let rpcHandler: (req: IncomingMessage, res: ServerResponse) => Promise<boolean>
 
 // Simple JSON helper (typed) – narrows headers & body
 function sendJson(res: ServerResponse, status: number, body: unknown): void {
@@ -168,32 +151,29 @@ const handler: ContextHandler = withLogging(withTrace(mainHandler))
 
 http.createServer(async (req, res) => {
   const ctx = createRequestContext(req)
-  // Expose on req for frameworks or code that prefers direct access
   req.ctx = ctx
-  // Abort on client disconnect (covers both aborted request & socket close)
+  // Build rpc handler lazily per request with current ctx
+  rpcHandler = createNodeHttpExampleHandler(exampleService, () => ctx)
   const abort = () => {
     const controller: AbortController | undefined = (ctx as any)._controller
     if (controller && !controller.signal.aborted) controller.abort()
   }
   req.on('aborted', abort)
   res.on('close', abort)
-  // Run the handler inside ALS scope for downstream access
-  await requestContextStorage.run(ctx, async () => {
-    try {
-      await handler(ctx, req, res)
-    } catch (err: any) {
-      console.error(`[ERR ${ctx.id}]`, err?.message || err)
-      if (!res.headersSent) {
-        res.writeHead(500, { 'Content-Type': 'application/json' })
-      }
-      if (!res.writableEnded) {
-        const body = ctx.abort.aborted
-          ? { msg: 'client closed request', reqId: ctx.id }
-          : { msg: 'internal error', reqId: ctx.id }
-        res.end(JSON.stringify(body))
-      }
+  try {
+    await handler(ctx, req, res)
+  } catch (err: any) {
+    console.error(`[ERR ${ctx.id}]`, err?.message || err)
+    if (!res.headersSent) {
+      res.writeHead(500, { 'Content-Type': 'application/json' })
     }
-  })
+    if (!res.writableEnded) {
+      const body = ctx.abort.aborted
+        ? { msg: 'client closed request', reqId: ctx.id }
+        : { msg: 'internal error', reqId: ctx.id }
+      res.end(JSON.stringify(body))
+    }
+  }
 }).listen(3000, () => {
   console.log("Server running at http://localhost:3000/ (context-enabled)")
 })

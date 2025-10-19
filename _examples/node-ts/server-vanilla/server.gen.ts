@@ -141,10 +141,12 @@ export interface GetUserReturn {
 // Server
 //
 
-export interface ExampleServer {
-    ping(args: PingArgs): Promise<PingReturn>
-    getUser(args: GetUserArgs): Promise<GetUserReturn>
-    getArticle(req: GetArticleRequest): Promise<GetArticleResponse>
+// Generic server interface accepting a user-defined context object C which
+// will be provided as the first argument to every RPC handler.
+export interface ExampleServer<Context = unknown> {
+    ping(ctx: Context, args: PingArgs): Promise<PingReturn>
+    getUser(ctx: Context, args: GetUserArgs): Promise<GetUserReturn>
+    getArticle(ctx: Context, req: GetArticleRequest): Promise<GetArticleResponse>
 }
 
 export class WebrpcError extends Error {
@@ -253,18 +255,18 @@ const validateType = (value: any, type: string) => {
 
 
 // Small pure dispatcher (no framework concepts)
-const dispatchRequest = async (service: ExampleServer, method: string, payload: any) => {
+const dispatchRequest = async <Context>(service: ExampleServer<Context>, ctx: Context, method: string, payload: any) => {
     switch (method) {
         case 'Ping':
-            return service.ping(payload || {})
+            return service.ping(ctx, payload || {})
         case 'GetUser':
             if (!payload || typeof payload.userId !== 'number') throw new WebrpcError('Missing or invalid argument `userId`', 400)
-            const userResp = await service.getUser({ userId: payload.userId })
+            const userResp = await service.getUser(ctx, { userId: payload.userId })
             if (!userResp || typeof userResp.code !== 'number' || !userResp.user) throw new WebrpcError('internal', 500)
             return userResp
         case 'GetArticle':
             if (!payload || typeof payload.articleId !== 'number') throw new WebrpcError('Missing or invalid argument `articleId`', 400)
-            return service.getArticle({ articleId: payload.articleId })
+            return service.getArticle(ctx, { articleId: payload.articleId })
         default:
             throw new WebrpcError('method not found', 404)
     }
@@ -272,13 +274,13 @@ const dispatchRequest = async (service: ExampleServer, method: string, payload: 
 
 // Ultra-thin helper: given full URL and body, resolve & execute if it's an Example RPC.
 // Returns null if the URL does not target the Example service (so caller can 404).
-export const handleExampleRpc = async (service: ExampleServer, methodUrl: string, body: any) => {
+export const handleExampleRpc = async <Context>(service: ExampleServer<Context>, methodUrl: string, body: any, ctx: Context) => {
     if (!methodUrl.startsWith('/rpc/')) return null
     const parts = methodUrl.split('/').filter(Boolean)
     if (parts.length !== 3 || parts[0] !== 'rpc' || parts[1] !== 'Example') return null
     const method = parts[2]
     try {
-        const result = await dispatchRequest(service, method, body)
+        const result = await dispatchRequest(service, ctx, method, body)
         return {
             method,
             status: 200,
@@ -311,13 +313,15 @@ export const handleExampleRpc = async (service: ExampleServer, methodUrl: string
 // It parses JSON bodies (if any) and delegates to `handleExampleRpc`. If the
 // request URL does not match the Example RPC pattern, it returns `false` so the
 // outer handler can continue handling (e.g. other routes or 404 logic).
+// NOTE: This file intentionally remains framework-agnostic. Fastify/Express
+// examples should call `handleExampleRpc` directly rather than altering this.
 // -----------------------------------------------------------------------------
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
 export type HttpHandler = (req: IncomingMessage, res: ServerResponse) => Promise<boolean>;
 
-export function createNodeHttpExampleHandler(service: ExampleServer): HttpHandler {
+export function createNodeHttpExampleHandler<Context>(service: ExampleServer<Context>, createCtx: (req: IncomingMessage) => Context): HttpHandler {
     return async function nodeHttpExampleHandler(req: IncomingMessage, res: ServerResponse): Promise<boolean> {
         const url = req.url || '';
         if (!url.startsWith('/rpc/')) return false; // not our RPC route
@@ -349,7 +353,8 @@ export function createNodeHttpExampleHandler(service: ExampleServer): HttpHandle
             }
         }
 
-        const result = await handleExampleRpc(service, url, parsed);
+        const ctx = createCtx(req)
+        const result = await handleExampleRpc(service, url, parsed, ctx);
         if (result == null) {
             return false; // pattern mismatch (shouldn't happen due to prefix check)
         }
