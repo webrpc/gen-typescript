@@ -1,23 +1,32 @@
 import { Hono } from 'hono'
 import { logger } from 'hono/logger'
 import { serve } from '@hono/node-server'
-import type { Context as HonoContext } from 'hono'
-import { Kind, ExampleServer, handleExampleRpc } from "./server.gen"
+import type { Context } from 'hono'
+import { ExampleServer, handleExampleRpc, Kind } from './server.gen'
 import { randomUUID } from 'node:crypto'
-
-// We now use Hono's native Context as the RPC context directly (no custom wrapper).
 
 // ---------------------------------------------------------------------------
 // Middleware signature with context (pure, explicit)
 // ---------------------------------------------------------------------------
-// Hono app setup
-const app = new Hono()
+// Define typed variable bag for Hono Context via Env generics.
+// Env = { Variables: { ... }, Bindings?: ..., BasePath?: string }
+interface ServiceEnv {
+  Variables: {
+    traceId: string
+    pingedAt?: string
+  }
+}
+
+type RequestContext = Context<ServiceEnv>
+
+// Hono app setup with typed env
+const app = new Hono<ServiceEnv>()
 
 // Built-in concise request logger (method/path/status/duration)
 app.use('*', logger())
 
 // Tracing + request id enrichment middleware
-app.use('*', async (c: HonoContext, next: () => Promise<void>) => {
+app.use('*', async (c: RequestContext, next: () => Promise<void>) => {
   const traceId = randomUUID()
   c.set('traceId', traceId)
   await next()
@@ -25,25 +34,25 @@ app.use('*', async (c: HonoContext, next: () => Promise<void>) => {
 })
 
 // Root route
-app.get('/', (c: HonoContext) => c.text(`Hello world (req ${c.get('reqId')})`))
+app.get('/', (c: RequestContext) => c.text(`Hello world (req ${c.var.traceId})`))
 
 // Health route
-app.get('/health', (c: HonoContext) => c.json({ ok: true, time: new Date().toISOString(), traceId: c.get('traceId'), reqId: c.get('reqId') }))
+app.get('/health', (c: RequestContext) => c.json({ ok: true, time: new Date().toISOString(), traceId: c.var.traceId }))
 
 // RPC mount (raw handler using generated helper)
-app.all('/rpc/*', async (c: HonoContext) => {
-  const body = await c.req.json().catch(() => ({}))
-  const result = await handleExampleRpc(exampleService, c.req.path, body, c as HonoContext)
-  if (result == null) return c.notFound()
-  for (const [k, v] of Object.entries(result.headers)) c.res.headers.set(k, String(v))
-  c.status(result.status as any)
-  return c.json(result.body)
+app.all('/rpc/*', async (ctx: RequestContext) => {
+  const body = await ctx.req.json().catch(() => ({}))
+  const result = await handleExampleRpc(exampleService, ctx, ctx.req.path, body)
+  if (result == null) return ctx.notFound()
+  for (const [k, v] of Object.entries(result.headers)) ctx.res.headers.set(k, String(v))
+  ctx.status(result.status as any)
+  return ctx.json(result.body)
 })
 
 // ---------------------------------------------------------------------------
 // ExampleServer implementation (in-memory demo)
 // ---------------------------------------------------------------------------
-const exampleService: ExampleServer<HonoContext> = {
+const exampleService: ExampleServer<RequestContext> = {
   async ping(ctx) {
     ctx.set('pingedAt', new Date().toISOString())
     return {}
@@ -55,14 +64,14 @@ const exampleService: ExampleServer<HonoContext> = {
         id: userId,
         USERNAME: `user-${userId}`,
         role: Kind.USER,
-        meta: { env: 'dev', traceId: ctx.get('traceId') },
+        meta: { env: 'dev', traceId: ctx.var.traceId },
       }
     }
   },
   async getArticle(ctx, { articleId }) {
     return {
       title: `Article ${articleId}`,
-      content: `Hello, this is the content for article ${articleId}. (req ${ctx.get('reqId')})`
+      content: `Hello, this is the content for article ${articleId}. (trace ${ctx.var.traceId})`
     }
   }
 }
