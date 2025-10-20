@@ -1,0 +1,21 @@
+{{define "serverInterface"}}
+
+{{- $services := .Services -}}
+{{- $typeMap := .TypeMap -}}
+
+{{- if $services}}
+//
+// Server interface
+//
+
+{{- range $_, $service := $services }}
+
+export interface {{$service.Name}}Server<Context = unknown> {
+  {{- range $_, $method := $service.Methods}}
+  {{firstLetterToLower $method.Name}}(ctx: Context, req: {{$method.Name}}Request): Promise<{{$method.Name}}Response>
+  {{- end}}
+}
+{{- end}}
+
+{{end -}}
+{{end}}

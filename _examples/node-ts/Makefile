@@ -10,6 +10,9 @@ generate:
 	webrpc-gen -schema=service.ridl -target=../../../gen-typescript -server -out=./server/server.gen.ts
 	webrpc-gen -schema=service.ridl -target=../../../gen-typescript -client -out=./webapp/client.gen.ts
 
+generate-server:
+	webrpc-gen -schema=service.ridl -target=../../../gen-typescript -server -out=./server/server.gen.ts
+
 run-server:
 	cd ./server && pnpm start
 

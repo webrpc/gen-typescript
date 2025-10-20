@@ -5,9 +5,8 @@
 {{- $services := .Services -}}
 
 //
-// Types
+// Schema types
 //
-
 {{if $types -}}
 {{range $_i, $type := $types -}}
 
@@ -40,45 +39,27 @@ export interface {{$type.Name}} {
 {{end -}}
 {{end -}}
 
-{{if $services}}
-{{- range $_, $service := $services}}
-export interface {{$service.Name}} {
-{{- range $_, $method := $service.Methods}}
-  {{- $deprecated := index $method.Annotations "deprecated" -}}
-  {{- if gt (len $method.Comments) 0 }}
-  /**
-    {{- range $_, $comment := $method.Comments }}
-   * {{ replaceAll $comment "\"" "'" }}
-    {{- end }}
-    {{- if $deprecated }}
-   *
-   * @deprecated {{ $deprecated.Value }}
-    {{- end }}
-   */
-  {{- else if $deprecated }}
-  /**
-   * @deprecated {{ $deprecated.Value }}
-   */
-  {{- end }}
-  {{firstLetterToLower $method.Name}}({{template "methodInputs" dict "Method" $method "TypeMap" $typeMap}}): {{if $method.StreamOutput}}WebrpcStreamController{{else}}Promise<{{$method.Name}}Return>{{end}}
-{{- end}}
-}
 
-{{range $_, $method := $service.Methods -}}
-export interface {{$method.Name}}Args {
+{{if $services}}
+//
+// Request/Response types
+//
+
+{{- range $_, $service := $services}}
+{{range $_, $method := $service.Methods}}
+export interface {{$method.Name}}Request {
 {{- range $_, $input := $method.Inputs}}
   {{$input.Name}}{{if $input.Optional}}?{{end}}: {{template "type" dict "Type" $input.Type "TypeMap" $typeMap}}
 {{- end}}
 }
 
-export interface {{$method.Name}}Return {
+export interface {{$method.Name}}Response {
 {{- range $_, $output := $method.Outputs}}
   {{$output.Name}}{{if $output.Optional}}?{{end}}: {{template "type" dict "Type" $output.Type "TypeMap" $typeMap}}
-{{- end}}  
+{{- end}}
 }
 {{end}}
 
-{{- end}}
-{{end -}}
-
 {{end}}
+{{end}}
+{{- end -}}
