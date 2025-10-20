@@ -1,62 +1,95 @@
-import Fastify from 'fastify'
-import cors from '@fastify/cors'
-import * as proto from './server.gen'
-import { handleExampleRpc, WebrpcHeader } from './server.gen'
+import http, { IncomingMessage, ServerResponse } from 'node:http'
+import { HttpHandler, createWebrpcServerHandler, RequestContext, createRequestContext, composeHttpHandler, sendJson } from './helpers'
+import { Kind, ExampleServer, serveExampleRpc } from './server.gen'
+import { withLogging, withTrace, withCors } from './middleware'
 
-// Create fastify instance
-const app = Fastify({ logger: true })
-
-// Implement webrpc service methods
-const exampleService: proto.ExampleServer = {
-  ping: async () => ({}),
-  getUser: async () => ({
-    code: 1,
-    user: {
-      id: 1,
-      USERNAME: 'webrpcfan',
-      role: proto.Kind.ADMIN,
-      meta: {},
-    },
-  }),
-  getArticle: async (req) => ({
-    title: 'Example Article #' + req.articleId,
-    content: 'This is an example article fetched from the server.',
-  }),
+// ExampleServer RPC implementation of the webrpc service definition
+const exampleService: ExampleServer<RequestContext> = {
+  async ping() {
+    return {}
+  },
+  async getUser(ctx, { userId }) {
+    const traceId = ctx.get<string>('traceId') || ''
+    return {
+      code: 200,
+      user: {
+        id: userId,
+        USERNAME: `user-${userId}`,
+        role: Kind.USER,
+        meta: { env: 'dev', reqId: ctx.reqId, traceId },
+      }
+    }
+  },
+  async getArticle(ctx, { articleId }) {
+    return {
+      title: `Article ${articleId}`,
+      content: `Hello, this is the content for article ${articleId}. (req ${ctx.reqId})`
+    }
+  }
 }
 
-// Minimal Fastify route using generic resolver.
-app.post('/rpc/*', async (request, reply) => {
-  const out = await handleExampleRpc(exampleService, request.url, request.body)
-  if (!out) return reply.callNotFound()
-  for (const [k, v] of Object.entries(out.headers)) reply.header(k, v as any)
-  reply.status(out.status).send(out.body)
+// Main routes entrypoint of the service
+const routes = (): HttpHandler  => {
+  const rpcHandler = createWebrpcServerHandler(exampleService, serveExampleRpc)
+
+  // Return the actual request handler (async because we use await inside)
+  return async (ctx: RequestContext, req: IncomingMessage, res: ServerResponse): Promise<void> => {
+    const url = req.url
+
+    // First try RPC routing (/rpc/*)
+    if (url?.startsWith('/rpc/')) {
+      await rpcHandler(ctx, req, res)
+      return
+    }
+
+    // Other routes
+    switch (url) {
+      case "/": {
+        res.writeHead(200, { "Content-Type": "text/plain" })
+        res.end(`Hello world (req ${ctx.reqId})\n`)
+        return
+      }
+      case "/json": {
+        sendJson(res, 200, { ok: true, time: new Date().toISOString(), reqId: ctx.reqId })
+        return
+      }
+      default: {
+        res.writeHead(404, { "Content-Type": "text/plain" })
+        res.end("Not Found\n")
+        return
+      }
+    }
+  }
+}
+
+// Compose middleware chain and primary routes entrypoint handler
+const handler = composeHttpHandler([withLogging, withTrace, withCors], routes())
+
+// Node http server bootstrap
+http.createServer(async (req, res) => {
+  const ctx = createRequestContext()
+
+  const abort = () => {
+    const controller: AbortController | undefined = (ctx as any)._controller
+    if (controller && !controller.signal.aborted) controller.abort()
+  }
+  req.once('aborted', abort)
+  res.once('close', abort)
+
+  try {
+    await handler(ctx, req, res)
+  } catch (err: any) {
+    console.error(`[ERR ${ctx.reqId}]`, err?.message || err)
+    if (!res.headersSent) {
+      res.writeHead(500, { 'Content-Type': 'application/json' })
+    }
+    if (!res.writableEnded) {
+      const body = ctx.abort.aborted
+        ? { msg: 'client closed request', reqId: ctx.reqId }
+        : { msg: 'internal error', reqId: ctx.reqId }
+      res.end(JSON.stringify(body))
+    }
+  }
+}).listen(3000, () => {
+  console.log("Server running at http://localhost:3000/")
 })
-
-// NOTE, if you are using express for some reason (dont, fastify is better),
-// your handler would look something like this:
-// app.post(/^\/rpc\//, async (req, res) => {
-//   const out = await handleExampleRPC(exampleService, req.url, req.body)
-//   if (!out) return res.status(404).end()
-//   res.status(out.status)
-//   for (const [k, v] of Object.entries(out.headers)) res.setHeader(k, v)
-//   res.json(out.body)
-// })
-
-// Start server
-const start = async () => {
-	try {
-		await app.register(cors, {
-			origin: true,
-			methods: ['POST', 'GET', 'OPTIONS'],
-			allowedHeaders: ['Content-Type', WebrpcHeader],
-			exposedHeaders: ['Content-Type', WebrpcHeader]
-		})
-		await app.listen({ port: 3000, host: '0.0.0.0' })
-		console.log('> Listening on port 3000')
-	} catch (err) {
-		app.log.error(err)
-		process.exit(1)
-	}
-}
-
-start()

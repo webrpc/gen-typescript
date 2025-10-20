@@ -19,51 +19,51 @@ export const WebrpcSchemaVersion = "v1.0.0"
 export const WebrpcSchemaHash = "21701cae51b73d035bf2180831cdb38220bbbccc"
 
 type WebrpcGenVersions = {
-    webrpcGenVersion: string;
-    codeGenName: string;
-    codeGenVersion: string;
-    schemaName: string;
-    schemaVersion: string;
+  webrpcGenVersion: string;
+  codeGenName: string;
+  codeGenVersion: string;
+  schemaName: string;
+  schemaVersion: string;
 };
 
 export function VersionFromHeader(headers: Headers): WebrpcGenVersions {
-    const headerValue = headers.get(WebrpcHeader);
-    if (!headerValue) {
-        return {
-            webrpcGenVersion: "",
-            codeGenName: "",
-            codeGenVersion: "",
-            schemaName: "",
-            schemaVersion: "",
-        };
-    }
+  const headerValue = headers.get(WebrpcHeader);
+  if (!headerValue) {
+    return {
+      webrpcGenVersion: "",
+      codeGenName: "",
+      codeGenVersion: "",
+      schemaName: "",
+      schemaVersion: "",
+    };
+  }
 
-    return parseWebrpcGenVersions(headerValue);
+  return parseWebrpcGenVersions(headerValue);
 }
 
 function parseWebrpcGenVersions(header: string): WebrpcGenVersions {
-    const versions = header.split(";");
-    if (versions.length < 3) {
-        return {
-            webrpcGenVersion: "",
-            codeGenName: "",
-            codeGenVersion: "",
-            schemaName: "",
-            schemaVersion: "",
-        };
-    }
-
-    const [_, webrpcGenVersion] = versions[0]!.split("@");
-    const [codeGenName, codeGenVersion] = versions[1]!.split("@");
-    const [schemaName, schemaVersion] = versions[2]!.split("@");
-
+  const versions = header.split(";");
+  if (versions.length < 3) {
     return {
-        webrpcGenVersion: webrpcGenVersion ?? "",
-        codeGenName: codeGenName ?? "",
-        codeGenVersion: codeGenVersion ?? "",
-        schemaName: schemaName ?? "",
-        schemaVersion: schemaVersion ?? "",
+      webrpcGenVersion: "",
+      codeGenName: "",
+      codeGenVersion: "",
+      schemaName: "",
+      schemaVersion: "",
     };
+  }
+
+  const [_, webrpcGenVersion] = versions[0]!.split("@");
+  const [codeGenName, codeGenVersion] = versions[1]!.split("@");
+  const [schemaName, schemaVersion] = versions[2]!.split("@");
+
+  return {
+    webrpcGenVersion: webrpcGenVersion ?? "",
+    codeGenName: codeGenName ?? "",
+    codeGenVersion: codeGenVersion ?? "",
+    schemaName: schemaName ?? "",
+    schemaVersion: schemaVersion ?? "",
+  };
 }
 
 //
@@ -71,44 +71,44 @@ function parseWebrpcGenVersions(header: string): WebrpcGenVersions {
 //
 
 export enum Kind {
-    USER = 'USER',
-    ADMIN = 'ADMIN'
+  USER = 'USER',
+  ADMIN = 'ADMIN'
 }
 
 export interface User {
-    id: number
-    USERNAME: string
-    role: Kind
-    meta: { [key: string]: any }
-    createdAt?: string
+  id: number
+  USERNAME: string
+  role: Kind
+  meta: { [key: string]: any }
+  createdAt?: string
 }
 
 export interface Page {
-    num: number
+  num: number
 }
 
 export interface GetArticleRequest {
-    articleId: number
+  articleId: number
 }
 
 export interface GetArticleResponse {
-    title: string
-    content?: string
+  title: string
+  content?: string
 }
 
 export interface ExampleClient {
-    /**
-     * @deprecated Use /health endpoint instead.
-     */
-    ping(headers?: object, signal?: AbortSignal): Promise<PingReturn>
-    /**
-     * GetUser returns a user by ID.
-     */
-    getUser(args: GetUserArgs, headers?: object, signal?: AbortSignal): Promise<GetUserReturn>
-    /**
-     * Get article by id.
-     */
-    getArticle(req: GetArticleRequest, headers?: object, signal?: AbortSignal): Promise<GetArticleResponse>
+  /**
+   * @deprecated Use /health endpoint instead.
+   */
+  ping(headers?: object, signal?: AbortSignal): Promise<PingReturn>
+  /**
+   * GetUser returns a user by ID.
+   */
+  getUser(args: GetUserArgs, headers?: object, signal?: AbortSignal): Promise<GetUserReturn>
+  /**
+   * Get article by id.
+   */
+  getArticle(req: GetArticleRequest, headers?: object, signal?: AbortSignal): Promise<GetArticleResponse>
 }
 
 // TODO: lets switch to names.. Request and Response suffixes ..? .. but maybe it'll break a lot of apps?
@@ -120,12 +120,12 @@ export interface PingArgs {
 export interface PingReturn {
 }
 export interface GetUserArgs {
-    userId: number
+  userId: number
 }
 
 export interface GetUserReturn {
-    code: number
-    user: User
+  code: number
+  user: User
 }
 // export interface GetArticleArgs {
 //   getArticleRequest: GetArticleRequest
@@ -141,106 +141,108 @@ export interface GetUserReturn {
 // Server
 //
 
-export interface ExampleServer {
-    ping(args: PingArgs): Promise<PingReturn>
-    getUser(args: GetUserArgs): Promise<GetUserReturn>
-    getArticle(req: GetArticleRequest): Promise<GetArticleResponse>
+// Generic server interface accepting a user-defined context object C which
+// will be provided as the first argument to every RPC handler.
+export interface ExampleServer<Context = unknown> {
+  ping(ctx: Context, args: PingArgs): Promise<PingReturn>
+  getUser(ctx: Context, args: GetUserArgs): Promise<GetUserReturn>
+  getArticle(ctx: Context, req: GetArticleRequest): Promise<GetArticleResponse>
 }
 
 export class WebrpcError extends Error {
-    statusCode?: number
-    constructor(msg: string = "error", statusCode?: number) {
-        super("webrpc error: " + msg);
-        Object.setPrototypeOf(this, WebrpcError.prototype);
-        this.statusCode = statusCode;
-    }
+  statusCode?: number
+  constructor(msg: string = "error", statusCode?: number) {
+    super("webrpc error: " + msg);
+    Object.setPrototypeOf(this, WebrpcError.prototype);
+    this.statusCode = statusCode;
+  }
 }
 
 const JS_TYPES = [
-    "bigint",
-    "boolean",
-    "function",
-    "number",
-    "object",
-    "string",
-    "symbol",
-    "undefined"
+  "bigint",
+  "boolean",
+  "function",
+  "number",
+  "object",
+  "string",
+  "symbol",
+  "undefined"
 ]
 
 const validateKind = (value: any) => {
-    if (!("USER" in value) || !validateType(value["USER"], "number")) {
-        return false
-    }
-    if (!("ADMIN" in value) || !validateType(value["ADMIN"], "number")) {
-        return false
-    }
-    return true
+  if (!("USER" in value) || !validateType(value["USER"], "number")) {
+    return false
+  }
+  if (!("ADMIN" in value) || !validateType(value["ADMIN"], "number")) {
+    return false
+  }
+  return true
 }
 
 const validateUser = (value: any) => {
-    if (!("id" in value) || !validateType(value["id"], "number")) {
-        return false
-    }
-    if (!("USERNAME" in value) || !validateType(value["USERNAME"], "string")) {
-        return false
-    }
-    if (!("role" in value) || !validateType(value["role"], "Kind")) {
-        return false
-    }
-    if (!("meta" in value) || !validateType(value["meta"], "object")) {
-        return false
-    }
-    if (!("-" in value) || !validateType(value["-"], "number")) {
-        return false
-    }
-    if ("createdAt" in value && !validateType(value["createdAt"], "string")) {
-        return false
-    }
-    return true
+  if (!("id" in value) || !validateType(value["id"], "number")) {
+    return false
+  }
+  if (!("USERNAME" in value) || !validateType(value["USERNAME"], "string")) {
+    return false
+  }
+  if (!("role" in value) || !validateType(value["role"], "Kind")) {
+    return false
+  }
+  if (!("meta" in value) || !validateType(value["meta"], "object")) {
+    return false
+  }
+  if (!("-" in value) || !validateType(value["-"], "number")) {
+    return false
+  }
+  if ("createdAt" in value && !validateType(value["createdAt"], "string")) {
+    return false
+  }
+  return true
 }
 
 const validatePage = (value: any) => {
-    if (!("num" in value) || !validateType(value["num"], "number")) {
-        return false
-    }
-    return true
+  if (!("num" in value) || !validateType(value["num"], "number")) {
+    return false
+  }
+  return true
 }
 
 const validateGetArticleRequest = (value: any) => {
-    if (!("articleId" in value) || !validateType(value["articleId"], "number")) {
-        return false
-    }
-    return true
+  if (!("articleId" in value) || !validateType(value["articleId"], "number")) {
+    return false
+  }
+  return true
 }
 
 const validateGetArticleResponse = (value: any) => {
-    if (!("title" in value) || !validateType(value["title"], "string")) {
-        return false
-    }
-    if ("content" in value && !validateType(value["content"], "string")) {
-        return false
-    }
-    return true
+  if (!("title" in value) || !validateType(value["title"], "string")) {
+    return false
+  }
+  if ("content" in value && !validateType(value["content"], "string")) {
+    return false
+  }
+  return true
 }
 
 
 const TYPE_VALIDATORS: { [type: string]: (value: any) => boolean } = {
-    Kind: validateKind,
-    User: validateUser,
-    Page: validatePage,
-    GetArticleRequest: validateGetArticleRequest,
-    GetArticleResponse: validateGetArticleResponse,
+  Kind: validateKind,
+  User: validateUser,
+  Page: validatePage,
+  GetArticleRequest: validateGetArticleRequest,
+  GetArticleResponse: validateGetArticleResponse,
 }
 
 const validateType = (value: any, type: string) => {
-    if (JS_TYPES.indexOf(type) > -1) {
-        return typeof value === type;
-    }
-    const validator = TYPE_VALIDATORS[type];
-    if (!validator) {
-        return false;
-    }
-    return validator(value);
+  if (JS_TYPES.indexOf(type) > -1) {
+    return typeof value === type;
+  }
+  const validator = TYPE_VALIDATORS[type];
+  if (!validator) {
+    return false;
+  }
+  return validator(value);
 }
 
 // -----------------------------------------------------------------------------
@@ -252,56 +254,55 @@ const validateType = (value: any, type: string) => {
 // similar to the original generated logic.
 
 
-// Small pure dispatcher (no framework concepts)
-const dispatchRequest = async (service: ExampleServer, method: string, payload: any) => {
-    switch (method) {
-        case 'Ping':
-            return service.ping(payload || {})
-        case 'GetUser':
-            if (!payload || typeof payload.userId !== 'number') throw new WebrpcError('Missing or invalid argument `userId`', 400)
-            const userResp = await service.getUser({ userId: payload.userId })
-            if (!userResp || typeof userResp.code !== 'number' || !userResp.user) throw new WebrpcError('internal', 500)
-            return userResp
-        case 'GetArticle':
-            if (!payload || typeof payload.articleId !== 'number') throw new WebrpcError('Missing or invalid argument `articleId`', 400)
-            return service.getArticle({ articleId: payload.articleId })
-        default:
-            throw new WebrpcError('method not found', 404)
-    }
-}
 
 // Ultra-thin helper: given full URL and body, resolve & execute if it's an Example RPC.
 // Returns null if the URL does not target the Example service (so caller can 404).
-export const handleExampleRpc = async (service: ExampleServer, methodUrl: string, body: any) => {
-    if (!methodUrl.startsWith('/rpc/')) return null
-    const parts = methodUrl.split('/').filter(Boolean)
-    if (parts.length !== 3 || parts[0] !== 'rpc' || parts[1] !== 'Example') return null
-    const method = parts[2]
-    try {
-        const result = await dispatchRequest(service, method, body)
-        return {
-            method,
-            status: 200,
-            headers: { [WebrpcHeader]: WebrpcHeaderValue, 'Content-Type': 'application/json' },
-            body: result ?? {}
-        }
-    } catch (err: any) {
-        if (err instanceof WebrpcError) {
-            const status = err.statusCode || 400
-            return {
-                method,
-                status,
-                headers: { [WebrpcHeader]: WebrpcHeaderValue, 'Content-Type': 'application/json' },
-                body: { msg: err.message, status, code: '' }
-            }
-        }
-        return {
-            method,
-            status: 400,
-            headers: { [WebrpcHeader]: WebrpcHeaderValue, 'Content-Type': 'application/json' },
-            body: { msg: err?.message || 'webrpc error', status: 400, code: '' }
-        }
+export const serveExampleRpc = async <Context>(service: ExampleServer<Context>, ctx: Context, urlPath: string, body: any) => {
+  if (!urlPath.startsWith('/rpc/')) return null
+  const parts = urlPath.split('/').filter(Boolean)
+  if (parts.length !== 3 || parts[0] !== 'rpc' || parts[1] !== 'Example') return null
+  const method = parts[2]
+  try {
+    const result = await dispatchExampleRequest(service, ctx, method, body)
+    return {
+      method,
+      status: 200,
+      headers: { [WebrpcHeader]: WebrpcHeaderValue, 'Content-Type': 'application/json' },
+      body: result ?? {}
     }
+  } catch (err: any) {
+    if (err instanceof WebrpcError) {
+      const status = err.statusCode || 400
+      return {
+        method,
+        status,
+        headers: { [WebrpcHeader]: WebrpcHeaderValue, 'Content-Type': 'application/json' },
+        body: { msg: err.message, status, code: '' }
+      }
+    }
+    return {
+      method,
+      status: 400,
+      headers: { [WebrpcHeader]: WebrpcHeaderValue, 'Content-Type': 'application/json' },
+      body: { msg: err?.message || 'webrpc error', status: 400, code: '' }
+    }
+  }
 }
 
-
+// Small pure dispatcher (no framework concepts)
+const dispatchExampleRequest = async <Context>(service: ExampleServer<Context>, ctx: Context, method: string, payload: any) => {
+  switch (method) {
+    case 'Ping':
+      return service.ping(ctx, payload || {})
+    case 'GetUser':
+      if (!payload || typeof payload.userId !== 'number') throw new WebrpcError('Missing or invalid argument `userId`', 400)
+      const userResp = await service.getUser(ctx, { userId: payload.userId })
+      if (!userResp || typeof userResp.code !== 'number' || !userResp.user) throw new WebrpcError('internal', 500)
+      return userResp
+    case 'GetArticle':
+      if (!payload || typeof payload.articleId !== 'number') throw new WebrpcError('Missing or invalid argument `articleId`', 400)
+      return service.getArticle(ctx, { articleId: payload.articleId })
+    default:
+      throw new WebrpcError('method not found', 404)
+  }
+}
