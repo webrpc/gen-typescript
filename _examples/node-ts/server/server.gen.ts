@@ -13,7 +13,8 @@ export const WebrpcSchemaVersion = "v1.0.0"
 
 // Schema hash generated from your RIDL schema
 export const WebrpcSchemaHash = "21701cae51b73d035bf2180831cdb38220bbbccc"
-  
+
+
 //
 // Server interface
 //
@@ -23,8 +24,6 @@ export interface ExampleServer<Context = unknown> {
   getUser(ctx: Context, req: GetUserRequest): Promise<GetUserResponse>
   getArticle(ctx: Context, req: GetArticleRequest): Promise<GetArticleResponse>
 }
-
-
 
 //
 // Schema types
@@ -86,7 +85,8 @@ export interface GetArticleResponse {
 
 
 
-  
+
+
 //
 // Server handler
 //
@@ -296,8 +296,6 @@ const validateType = (value: any, type: string) => {
 
     return validator(value);
 }
-
-
 
 //
 // Errors

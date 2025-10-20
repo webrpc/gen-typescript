@@ -78,26 +78,36 @@ export const WebrpcSchemaVersion = "{{.SchemaVersion}}"
 // Schema hash generated from your RIDL schema
 export const WebrpcSchemaHash = "{{.SchemaHash}}"
 
-{{- if $opts.client}}
-  {{template "clientInterface" dict "Services" .Services "Opts" $opts "TypeMap" $typeMap}}
-{{- end}}
+{{- "\n" -}}
 
-{{- if $opts.server}}
+{{- if $opts.client -}}
+  {{template "clientInterface" dict "Services" .Services "Opts" $opts "TypeMap" $typeMap}}
+{{- end -}}
+
+{{- "\n" -}}
+
+{{- if $opts.server -}}
   {{template "serverInterface" dict "Services" .Services "Opts" $opts "TypeMap" $typeMap}}
-{{- end}}
+{{- end -}}
+
+{{- "\n\n" -}}
 
 {{template "types" dict "Types" .Types "Services" .Services "TypeMap" $typeMap}}
 
-{{- if $opts.client}}
+{{- "\n" -}}
+
+{{- if $opts.client -}}
   {{template "client" dict "Services" .Services "Opts" $opts "TypeMap" $typeMap}}
 
   {{template "clientHelpers" dict "WebrpcErrors" .WebrpcErrors "SchemaErrors" .Errors "Opts" $opts }}
-{{- end}}
+{{- end -}}
 
-{{- if $opts.server}}
+{{- "\n" -}}
+
+{{- if $opts.server -}}
   {{template "server" dict "Services" .Services "Opts" $opts "TypeMap" $typeMap}}
   {{template "serverHelpers" dict "Types" .Types "TypeMap" $typeMap}}
-{{- end}}
+{{- end -}}
 
 {{template "errors" dict "Services" .Services "WebrpcErrors" .WebrpcErrors "SchemaErrors" .Errors "Opts" $opts}}
 
