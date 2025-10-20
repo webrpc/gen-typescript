@@ -318,53 +318,53 @@ const dispatchExampleRequest = async <Context>(service: ExampleServer<Context>, 
 // examples should call `handleExampleRpc` directly rather than altering this.
 // -----------------------------------------------------------------------------
 
-import type { IncomingMessage, ServerResponse } from 'node:http';
+// import type { IncomingMessage, ServerResponse } from 'node:http';
 
-export type HttpHandler = (req: IncomingMessage, res: ServerResponse) => Promise<boolean>;
+// export type HttpHandler = (req: IncomingMessage, res: ServerResponse) => Promise<boolean>;
 
-export function createNodeHttpExampleHandler<Context>(service: ExampleServer<Context>, createCtx: (req: IncomingMessage) => Context): HttpHandler {
-  return async function nodeHttpExampleHandler(req: IncomingMessage, res: ServerResponse): Promise<boolean> {
-    const url = req.url || '';
-    if (!url.startsWith('/rpc/')) return false; // not our RPC route
+// export function createNodeHttpExampleHandler<Context>(service: ExampleServer<Context>, createCtx: (req: IncomingMessage) => Context): HttpHandler {
+//   return async function nodeHttpExampleHandler(req: IncomingMessage, res: ServerResponse): Promise<boolean> {
+//     const url = req.url || '';
+//     if (!url.startsWith('/rpc/')) return false; // not our RPC route
 
-    // Accumulate body (only for methods that may carry a payload). We accept both GET & POST;
-    // GET requests simply use an empty object. POST/PUT/PATCH attempt to parse JSON.
-    const method = (req.method || 'GET').toUpperCase();
-    let rawBody = '';
-    if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
-      rawBody = await new Promise<string>((resolve, reject) => {
-        let data = '';
-        req.on('data', (chunk: Buffer) => { data += chunk.toString('utf8'); });
-        req.on('end', () => resolve(data));
-        req.on('error', reject);
-      });
-    }
+//     // Accumulate body (only for methods that may carry a payload). We accept both GET & POST;
+//     // GET requests simply use an empty object. POST/PUT/PATCH attempt to parse JSON.
+//     const method = (req.method || 'GET').toUpperCase();
+//     let rawBody = '';
+//     if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
+//       rawBody = await new Promise<string>((resolve, reject) => {
+//         let data = '';
+//         req.on('data', (chunk: Buffer) => { data += chunk.toString('utf8'); });
+//         req.on('end', () => resolve(data));
+//         req.on('error', reject);
+//       });
+//     }
 
-    let parsed: any = {};
-    if (rawBody.length > 0) {
-      try {
-        parsed = JSON.parse(rawBody);
-      } catch (e: any) {
-        // Malformed JSON
-        const status = 400;
-        const body = { msg: 'invalid JSON body', status, code: '' };
-        res.writeHead(status, { [WebrpcHeader]: WebrpcHeaderValue, 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(body));
-        return true; // handled
-      }
-    }
+//     let parsed: any = {};
+//     if (rawBody.length > 0) {
+//       try {
+//         parsed = JSON.parse(rawBody);
+//       } catch (e: any) {
+//         // Malformed JSON
+//         const status = 400;
+//         const body = { msg: 'invalid JSON body', status, code: '' };
+//         res.writeHead(status, { [WebrpcHeader]: WebrpcHeaderValue, 'Content-Type': 'application/json' });
+//         res.end(JSON.stringify(body));
+//         return true; // handled
+//       }
+//     }
 
-    const ctx = createCtx(req)
-    const result = await serveExampleRpc(service, ctx, url, parsed);
-    if (result == null) {
-      return false; // pattern mismatch (shouldn't happen due to prefix check)
-    }
-    const payload = JSON.stringify(result.body ?? {});
-    res.writeHead(result.status, {
-      ...result.headers,
-      'Content-Length': Buffer.byteLength(payload)
-    });
-    res.end(payload);
-    return true;
-  };
-}
+//     const ctx = createCtx(req)
+//     const result = await serveExampleRpc(service, ctx, url, parsed);
+//     if (result == null) {
+//       return false; // pattern mismatch (shouldn't happen due to prefix check)
+//     }
+//     const payload = JSON.stringify(result.body ?? {});
+//     res.writeHead(result.status, {
+//       ...result.headers,
+//       'Content-Length': Buffer.byteLength(payload)
+//     });
+//     res.end(payload);
+//     return true;
+//   };
+// }
