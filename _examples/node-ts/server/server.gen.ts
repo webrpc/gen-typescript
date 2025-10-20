@@ -84,20 +84,10 @@ export interface GetUserResponse {
 // }
 
 
-// -----------------------------------------------------------------------------
-// Lightweight, framework-agnostic helpers (added manually for cleaner usage)
-// -----------------------------------------------------------------------------
-// These helpers provide a tiny dispatch layer so application code (e.g. Fastify,
-// Express, native http) can register a single handler without crafting req/res
-// shims. They intentionally keep validation minimal – just presence/type checks
-// similar to the original generated logic.
-
 //
 // Server handler
 //
 
-// Ultra-thin helper: given full URL and body, resolve & execute if it's an Example RPC.
-// Returns null if the URL does not target the Example service (so caller can 404).
 export const serveExampleRpc = async <Context>(service: ExampleServer<Context>, ctx: Context, urlPath: string, body: any) => {
   if (!urlPath.startsWith('/rpc/')) return null
   const parts = urlPath.split('/').filter(Boolean)
@@ -152,7 +142,7 @@ const dispatchExampleRequest = async <Context>(service: ExampleServer<Context>, 
       }
       return service.getArticle(ctx, payload || {})
     default:
-      throw new WebrpcEndpointError({ cause: 'method not found', status: 404 })
+      throw new WebrpcBadRouteError({ cause: 'Method not found' })
   }
 }
 
@@ -208,18 +198,17 @@ export class WebrpcRequestFailedError extends WebrpcError {
   }
 }
 
-// export class WebrpcBadRouteError extends WebrpcError {
-//   constructor(
-//     name: string = 'WebrpcBadRoute',
-//     status: number = 404,
-//     code: number = -2,
-//     message: string = `bad route`,
-//     cause?: string
-//   ) {
-//     super(name, status, code, message, cause)
-//     Object.setPrototypeOf(this, WebrpcBadRouteError.prototype)
-//   }
-// }
+export class WebrpcBadRouteError extends WebrpcError {
+  constructor(error: WebrpcErrorParams = {}) {
+    super(error)
+    this.name = error.name || 'WebrpcBadRoute'
+    this.code = typeof error.code === 'number' ? error.code : -2
+    this.message = error.message || `bad route`
+    this.status = typeof error.status === 'number' ? error.status : 404
+    this.cause = error.cause
+    Object.setPrototypeOf(this, WebrpcBadRouteError.prototype)
+  }
+}
 
 // export class WebrpcBadMethodError extends WebrpcError {
 //   constructor(
