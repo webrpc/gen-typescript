@@ -1,7 +1,7 @@
 import Fastify from 'fastify'
 import type { FastifyRequest, FastifyReply, FastifyError, FastifyPluginCallback } from 'fastify'
 import cors from '@fastify/cors'
-import { Kind, ExampleServer, handleExampleRpc } from './server.gen'
+import { Kind, ExampleServer, serveExampleRpc } from './server.gen'
 import { randomUUID } from 'node:crypto'
 
 // ---------------------------------------------------------------------------
@@ -111,7 +111,7 @@ app.route({
   method: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
   url: '/rpc/*',
   handler: async (req: FastifyRequest, reply: FastifyReply) => {
-    const rpc = await handleExampleRpc(exampleService, req.url, req.body, req.ctx)
+    const rpc = await serveExampleRpc(exampleService, req.ctx, req.url, req.body)
     if (rpc) {
       reply.code(rpc.status)
       for (const [k, v] of Object.entries(rpc.headers)) reply.header(k, v as any)

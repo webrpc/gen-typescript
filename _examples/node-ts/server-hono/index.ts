@@ -3,7 +3,7 @@ import type { Context } from 'hono'
 import { serve } from '@hono/node-server'
 import { logger } from 'hono/logger'
 import { cors } from 'hono/cors'
-import { ExampleServer, handleExampleRpc, Kind } from './server.gen'
+import { ExampleServer, serveExampleRpc, Kind } from './server.gen'
 import { randomUUID } from 'node:crypto'
 
 // ---------------------------------------------------------------------------
@@ -53,7 +53,7 @@ app.get('/health', (c: RequestContext) => c.json({ ok: true, time: new Date().to
 // RPC mount (raw handler using generated helper)
 app.all('/rpc/*', async (ctx: RequestContext) => {
   const body = await ctx.req.json().catch(() => ({}))
-  const result = await handleExampleRpc(exampleService, ctx, ctx.req.path, body)
+  const result = await serveExampleRpc(exampleService, ctx, ctx.req.path, body)
   if (result == null) return ctx.notFound()
   for (const [k, v] of Object.entries(result.headers)) ctx.res.headers.set(k, String(v))
   ctx.status(result.status as any)
