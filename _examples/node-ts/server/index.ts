@@ -1,6 +1,6 @@
 import http, { IncomingMessage, ServerResponse } from 'node:http'
 import { HttpHandler, createHttpEntrypoint, createWebrpcServerHandler, RequestContext, composeHttpHandler, sendJson } from './helpers'
-import { Kind, ExampleServer, serveExampleRpc } from './server.gen'
+import { Kind, ExampleServer, serveExampleRpc, GetUserArgs, GetUserReturn, GetArticleRequest, GetArticleResponse } from './server.gen'
 import { withLogging, withTrace, withCors } from './middleware'
 
 // ExampleServer RPC implementation of the webrpc service definition
@@ -28,8 +28,35 @@ const exampleService: ExampleServer<RequestContext> = {
   }
 }
 
+// NOTE: here is another demo of how you can implement the ExampleServer RPC interface using a class.
+// --
+// class ExampleService implements ExampleServer<RequestContext> {
+//   async ping(): Promise<{}> {
+//     return {}
+//   }
+//   async getUser(ctx: RequestContext, args: GetUserArgs): Promise<GetUserReturn> {
+//     const traceId = ctx.get<string>('traceId') || ''
+//     return {
+//       code: 200,
+//       user: {
+//         id: args.userId,
+//         USERNAME: `user-${args.userId}`,
+//         role: Kind.USER,
+//         meta: { env: 'dev', reqId: ctx.reqId, traceId },
+//       }
+//     }
+//   }
+//   async getArticle(ctx: RequestContext, args: GetArticleRequest): Promise<GetArticleResponse> {
+//     return {
+//       title: `Article ${args.articleId}`,
+//       content: `Hello, this is the content for article ${args.articleId}. (req ${ctx.reqId})`
+//     }
+//   }
+// }
+
 // Main routes of the service
 const routes = (): HttpHandler  => {
+  // const exampleService = new ExampleService()
   const rpcHandler = createWebrpcServerHandler(exampleService, serveExampleRpc)
 
   // Return the actual request handler (async because we use await inside)
