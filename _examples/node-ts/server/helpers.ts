@@ -21,9 +21,13 @@ export interface RequestContext {
 
   // internal abort controller instance (non-enumerable at runtime)
   _controller?: AbortController
+
+  // raw HTTP request & response objects
+  httpRequest: IncomingMessage
+  httpResponse: ServerResponse
 }
 
-export const createRequestContext = (): RequestContext => {
+export const createRequestContext = (req: IncomingMessage, res: ServerResponse): RequestContext => {
   const start = performance.now()
   const controller = new AbortController()
   const ctx: RequestContext = {
@@ -33,10 +37,16 @@ export const createRequestContext = (): RequestContext => {
     data: new Map(),
     set(key, value) { this.data.set(key, value) },
     get(key) { return this.data.get(key) as any },
+    httpRequest: req,
+    httpResponse: res,
   }
 
   // Make _controller non-enumerable to keep logs clean
   Object.defineProperty(ctx, '_controller', { value: controller, enumerable: false, writable: false })
+
+  // Make httpRequest & httpResponse non-enumerable to keep logs clean
+  Object.defineProperty(ctx, 'httpRequest', { value: req, enumerable: false, writable: false })
+  Object.defineProperty(ctx, 'httpResponse', { value: res, enumerable: false, writable: false })
 
   return ctx
 }
@@ -53,7 +63,7 @@ export interface WebrpcResult {
 
 export const createHttpEntrypoint = (handler: HttpHandler) => {
   return async (req: IncomingMessage, res: ServerResponse) => {
-    const ctx = createRequestContext()
+    const ctx = createRequestContext(req, res)
 
     const abort = () => {
       const controller: AbortController | undefined = (ctx as any)._controller

@@ -100,11 +100,11 @@ export interface ExampleClient {
   /**
    * @deprecated Use /health endpoint instead.
    */
-  ping(headers?: object, signal?: AbortSignal): Promise<PingReturn>
+  ping(headers?: object, signal?: AbortSignal): Promise<PingResponse>
   /**
    * GetUser returns a user by ID.
    */
-  getUser(args: GetUserArgs, headers?: object, signal?: AbortSignal): Promise<GetUserReturn>
+  getUser(args: GetUserRequest, headers?: object, signal?: AbortSignal): Promise<GetUserResponse>
   /**
    * Get article by id.
    */
@@ -114,19 +114,21 @@ export interface ExampleClient {
 // TODO: lets switch to names.. Request and Response suffixes ..? .. but maybe it'll break a lot of apps?
 // consider adding a flag here for it..? at generation time.. like --compat mode ..
 
-export interface PingArgs {
+export interface PingRequest {
 }
 
-export interface PingReturn {
+export interface PingResponse {
 }
-export interface GetUserArgs {
+
+export interface GetUserRequest {
   userId: number
 }
 
-export interface GetUserReturn {
+export interface GetUserResponse {
   code: number
   user: User
 }
+
 // export interface GetArticleArgs {
 //   getArticleRequest: GetArticleRequest
 // }
@@ -144,8 +146,8 @@ export interface GetUserReturn {
 // Generic server interface accepting a user-defined context object C which
 // will be provided as the first argument to every RPC handler.
 export interface ExampleServer<Context = unknown> {
-  ping(ctx: Context, args: PingArgs): Promise<PingReturn>
-  getUser(ctx: Context, args: GetUserArgs): Promise<GetUserReturn>
+  ping(ctx: Context, req: PingRequest): Promise<PingResponse>
+  getUser(ctx: Context, req: GetUserRequest): Promise<GetUserResponse>
   getArticle(ctx: Context, req: GetArticleRequest): Promise<GetArticleResponse>
 }
 
