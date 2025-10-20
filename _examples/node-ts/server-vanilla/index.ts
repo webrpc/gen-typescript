@@ -1,7 +1,7 @@
 import http, { IncomingMessage, ServerResponse } from 'node:http'
 import { HttpHandler, createWebrpcServerHandler, RequestContext, createRequestContext, composeHttpHandler, sendJson } from './helpers'
 import { Kind, ExampleServer, serveExampleRpc } from './server.gen'
-import { withLogging, withTrace } from './middleware'
+import { withLogging, withTrace, withCors } from './middleware'
 
 // ExampleServer RPC implementation of the webrpc service definition
 const exampleService: ExampleServer<RequestContext> = {
@@ -63,7 +63,7 @@ const routes = (): HttpHandler  => {
 }
 
 // Compose middleware chain and primary routes entrypoint handler
-const handler = composeHttpHandler([withLogging, withTrace], routes())
+const handler = composeHttpHandler([withLogging, withTrace, withCors], routes())
 
 // Node http server bootstrap
 http.createServer(async (req, res) => {

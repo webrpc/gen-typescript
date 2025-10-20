@@ -24,3 +24,35 @@ export const withTrace = (next: HttpHandler): HttpHandler => {
     await next(ctx, req, res)
   }
 }
+
+// Middleware for permissive CORS handling (allow all origins)
+// - Sets standard Access-Control-* headers
+// - Responds immediately to OPTIONS preflight with 204 No Content
+// - Leaves actual request handling to downstream middleware/handler
+//
+// NOTE: make sure to adjust for your security needs! This is just a demo
+// cors middleware.
+export const withCors = (next: HttpHandler): HttpHandler => {
+  return async (ctx, req, res) => {
+    // Apply headers early (unless already sent)
+    if (!res.headersSent) {
+      res.setHeader('Access-Control-Allow-Origin', '*')
+      res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS')
+      // If the client asked for specific headers, echo them; otherwise provide a reasonable default list
+      const reqHeaders = req.headers['access-control-request-headers']
+      res.setHeader('Access-Control-Allow-Headers', reqHeaders || 'Content-Type, Authorization')
+      res.setHeader('Access-Control-Max-Age', '86400') // 24h caching of preflight
+    }
+
+    if (req.method === 'OPTIONS') {
+      // Preflight: finalize quickly
+      if (!res.headersSent) {
+        res.writeHead(204)
+      }
+      res.end()
+      return
+    }
+
+    await next(ctx, req, res)
+  }
+}
