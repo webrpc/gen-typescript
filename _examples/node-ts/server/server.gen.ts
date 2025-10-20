@@ -177,8 +177,6 @@ export class WebrpcError extends Error {
   }
 }
 
-// Webrpc errors
-
 export class WebrpcEndpointError extends WebrpcError {
   constructor(error: WebrpcErrorParams = {}) {
     super(error)

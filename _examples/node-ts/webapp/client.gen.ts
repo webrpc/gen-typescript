@@ -5,10 +5,6 @@
 //
 // webrpc-gen -schema=service.ridl -target=../../../gen-typescript -client -out=./webapp/client.gen.ts
 
-export const WebrpcHeader = "Webrpc"
-
-export const WebrpcHeaderValue = "webrpc@v0.28.1-1-ge2b37ad;gen-typescript@unknown;node-ts@v1.0.0"
-
 // Webrpc description and code-gen version
 export const WebrpcVersion = "v1"
 
@@ -18,58 +14,32 @@ export const WebrpcSchemaVersion = "v1.0.0"
 // Schema hash generated from your RIDL schema
 export const WebrpcSchemaHash = "21701cae51b73d035bf2180831cdb38220bbbccc"
 
-type WebrpcGenVersions = {
-  webrpcGenVersion: string;
-  codeGenName: string;
-  codeGenVersion: string;
-  schemaName: string;
-  schemaVersion: string;
-};
 
-export function VersionFromHeader(headers: Headers): WebrpcGenVersions {
-  const headerValue = headers.get(WebrpcHeader);
-  if (!headerValue) {
-    return {
-      webrpcGenVersion: "",
-      codeGenName: "",
-      codeGenVersion: "",
-      schemaName: "",
-      schemaVersion: "",
-    };
-  }
+//
+// Client interface
+//
 
-  return parseWebrpcGenVersions(headerValue);
+export interface ExampleClient {
+  /**
+   * @deprecated Use /health endpoint instead.
+   */
+  ping(headers?: object, signal?: AbortSignal): Promise<PingReturn>
+
+  /**
+   * GetUser returns a user by ID.
+   */
+  getUser(args: GetUserArgs, headers?: object, signal?: AbortSignal): Promise<GetUserReturn>
+  
+  /**
+   * Get article by id.
+   */
+  getArticle(req: GetArticleRequest, headers?: object, signal?: AbortSignal): Promise<GetArticleResponse>
 }
 
-function parseWebrpcGenVersions(header: string): WebrpcGenVersions {
-  const versions = header.split(";");
-  if (versions.length < 3) {
-    return {
-      webrpcGenVersion: "",
-      codeGenName: "",
-      codeGenVersion: "",
-      schemaName: "",
-      schemaVersion: "",
-    };
-  }
-
-  const [_, webrpcGenVersion] = versions[0]!.split("@");
-  const [codeGenName, codeGenVersion] = versions[1]!.split("@");
-  const [schemaName, schemaVersion] = versions[2]!.split("@");
-
-  return {
-    webrpcGenVersion: webrpcGenVersion ?? "",
-    codeGenName: codeGenName ?? "",
-    codeGenVersion: codeGenVersion ?? "",
-    schemaName: schemaName ?? "",
-    schemaVersion: schemaVersion ?? "",
-  };
-}
 
 //
 // Types
 //
-
 
 export enum Kind {
   USER = 'USER',
@@ -97,22 +67,7 @@ export interface GetArticleResponse {
   content?: string
 }
 
-export interface ExampleClient {
-  /**
-   * @deprecated Use /health endpoint instead.
-   */
-  ping(headers?: object, signal?: AbortSignal): Promise<PingReturn>
-
-  /**
-   * GetUser returns a user by ID.
-   */
-  getUser(args: GetUserArgs, headers?: object, signal?: AbortSignal): Promise<GetUserReturn>
-  
-  /**
-   * Get article by id.
-   */
-  getArticle(req: GetArticleRequest, headers?: object, signal?: AbortSignal): Promise<GetArticleResponse>
-}
+//--
 
 export interface PingArgs {
 }
@@ -229,9 +184,12 @@ const buildResponse = (res: Response): Promise<any> => {
   })
 }
 
+
 //
 // Errors
 //
+
+type WebrpcErrorParams = { name?: string, code?: number, message?: string, status?: number, cause?: string }
 
 export class WebrpcError extends Error {
   name: string
@@ -240,246 +198,302 @@ export class WebrpcError extends Error {
   status: number
   cause?: string
 
-  constructor(name: string, code: number, message: string, status: number, cause?: string) {
-    super(message)
-    this.name = name || 'WebrpcError'
-    this.code = typeof code === 'number' ? code : 0
-    this.message = message || `endpoint error ${this.code}`
-    this.status = typeof status === 'number' ? status : 0
-    this.cause = cause
+  constructor(error: WebrpcErrorParams = {}) {
+    super(error.message)
+    this.name = error.name || 'WebrpcError'
+    this.code = typeof error.code === 'number' ? error.code : 0
+    this.message = error.message || `endpoint error ${this.code}`
+    this.status = typeof error.status === 'number' ? error.status : 400
+    this.cause = error.cause
     Object.setPrototypeOf(this, WebrpcError.prototype)
   }
 
-  static new(payload: any): WebrpcError {
-    return new this(payload.error, payload.code, payload.message || payload.msg, payload.status, payload.cause)
+  static new (payload: any): WebrpcError {
+    return new this({ message: payload.message, code: payload.code, status: payload.status, cause: payload.cause })
   }
 }
 
-// Webrpc errors
-
 export class WebrpcEndpointError extends WebrpcError {
-  constructor(
-    name: string = 'WebrpcEndpoint',
-    code: number = 0,
-    message: string = `endpoint error`,
-    status: number = 400,
-    cause?: string
-  ) {
-    super(name, code, message, status, cause)
+  constructor(error: WebrpcErrorParams = {}) {
+    super(error)
+    this.name = error.name || 'WebrpcEndpoint'
+    this.code = typeof error.code === 'number' ? error.code : 0
+    this.message = error.message || `endpoint error ${this.code}`
+    this.status = typeof error.status === 'number' ? error.status : 400
+    this.cause = error.cause
     Object.setPrototypeOf(this, WebrpcEndpointError.prototype)
   }
 }
 
 export class WebrpcRequestFailedError extends WebrpcError {
-  constructor(
-    name: string = 'WebrpcRequestFailed',
-    code: number = -1,
-    message: string = `request failed`,
-    status: number = 400,
-    cause?: string
-  ) {
-    super(name, code, message, status, cause)
+  constructor(error: WebrpcErrorParams = {}) {
+    super(error)
+    this.name = error.name || 'WebrpcRequestFailed'
+    this.code = typeof error.code === 'number' ? error.code : -1
+    this.message = error.message || `endpoint error ${this.code}`
+    this.status = typeof error.status === 'number' ? error.status : 400
+    this.cause = error.cause
     Object.setPrototypeOf(this, WebrpcRequestFailedError.prototype)
   }
 }
 
-export class WebrpcBadRouteError extends WebrpcError {
-  constructor(
-    name: string = 'WebrpcBadRoute',
-    code: number = -2,
-    message: string = `bad route`,
-    status: number = 404,
-    cause?: string
-  ) {
-    super(name, code, message, status, cause)
-    Object.setPrototypeOf(this, WebrpcBadRouteError.prototype)
-  }
-}
+// export class WebrpcError extends Error {
+//   name: string
+//   code: number
+//   message: string
+//   status: number
+//   cause?: string
 
-export class WebrpcBadMethodError extends WebrpcError {
-  constructor(
-    name: string = 'WebrpcBadMethod',
-    code: number = -3,
-    message: string = `bad method`,
-    status: number = 405,
-    cause?: string
-  ) {
-    super(name, code, message, status, cause)
-    Object.setPrototypeOf(this, WebrpcBadMethodError.prototype)
-  }
-}
+//   constructor(name: string, code: number, message: string, status: number, cause?: string) {
+//     super(message)
+//     this.name = name || 'WebrpcError'
+//     this.code = typeof code === 'number' ? code : 0
+//     this.message = message || `endpoint error ${this.code}`
+//     this.status = typeof status === 'number' ? status : 0
+//     this.cause = cause
+//     Object.setPrototypeOf(this, WebrpcError.prototype)
+//   }
 
-export class WebrpcBadRequestError extends WebrpcError {
-  constructor(
-    name: string = 'WebrpcBadRequest',
-    code: number = -4,
-    message: string = `bad request`,
-    status: number = 400,
-    cause?: string
-  ) {
-    super(name, code, message, status, cause)
-    Object.setPrototypeOf(this, WebrpcBadRequestError.prototype)
-  }
-}
+//   static new(payload: any): WebrpcError {
+//     return new this(payload.error, payload.code, payload.message || payload.msg, payload.status, payload.cause)
+//   }
+// }
+
+// // Webrpc errors
+
+// export class WebrpcEndpointError extends WebrpcError {
+//   constructor(
+//     name: string = 'WebrpcEndpoint',
+//     code: number = 0,
+//     message: string = `endpoint error`,
+//     status: number = 400,
+//     cause?: string
+//   ) {
+//     super(name, code, message, status, cause)
+//     Object.setPrototypeOf(this, WebrpcEndpointError.prototype)
+//   }
+// }
+
+// export class WebrpcRequestFailedError extends WebrpcError {
+//   constructor(
+//     name: string = 'WebrpcRequestFailed',
+//     code: number = -1,
+//     message: string = `request failed`,
+//     status: number = 400,
+//     cause?: string
+//   ) {
+//     super(name, code, message, status, cause)
+//     Object.setPrototypeOf(this, WebrpcRequestFailedError.prototype)
+//   }
+// }
+
+// export class WebrpcBadRouteError extends WebrpcError {
+//   constructor(
+//     name: string = 'WebrpcBadRoute',
+//     code: number = -2,
+//     message: string = `bad route`,
+//     status: number = 404,
+//     cause?: string
+//   ) {
+//     super(name, code, message, status, cause)
+//     Object.setPrototypeOf(this, WebrpcBadRouteError.prototype)
+//   }
+// }
+
+// export class WebrpcBadMethodError extends WebrpcError {
+//   constructor(
+//     name: string = 'WebrpcBadMethod',
+//     code: number = -3,
+//     message: string = `bad method`,
+//     status: number = 405,
+//     cause?: string
+//   ) {
+//     super(name, code, message, status, cause)
+//     Object.setPrototypeOf(this, WebrpcBadMethodError.prototype)
+//   }
+// }
+
+// export class WebrpcBadRequestError extends WebrpcError {
+//   constructor(
+//     name: string = 'WebrpcBadRequest',
+//     code: number = -4,
+//     message: string = `bad request`,
+//     status: number = 400,
+//     cause?: string
+//   ) {
+//     super(name, code, message, status, cause)
+//     Object.setPrototypeOf(this, WebrpcBadRequestError.prototype)
+//   }
+// }
 
 export class WebrpcBadResponseError extends WebrpcError {
-  constructor(
-    name: string = 'WebrpcBadResponse',
-    code: number = -5,
-    message: string = `bad response`,
-    status: number = 500,
-    cause?: string
-  ) {
-    super(name, code, message, status, cause)
+  constructor(error: WebrpcErrorParams = {}) {
+    super(error)
+    this.name = error.name || 'WebrpcBadResponse'
+    this.code = typeof error.code === 'number' ? error.code : -5
+    this.message = error.message || `endpoint error ${this.code}`
+    this.status = typeof error.status === 'number' ? error.status : 500
+    this.cause = error.cause
     Object.setPrototypeOf(this, WebrpcBadResponseError.prototype)
   }
+
+  // constructor(
+  //   name: string = 'WebrpcBadResponse',
+  //   code: number = -5,
+  //   message: string = `bad response`,
+  //   status: number = 500,
+  //   cause?: string
+  // ) {
+  //   super(name, code, message, status, cause)
+  //   Object.setPrototypeOf(this, WebrpcBadResponseError.prototype)
+  // }
 }
 
-export class WebrpcServerPanicError extends WebrpcError {
-  constructor(
-    name: string = 'WebrpcServerPanic',
-    code: number = -6,
-    message: string = `server panic`,
-    status: number = 500,
-    cause?: string
-  ) {
-    super(name, code, message, status, cause)
-    Object.setPrototypeOf(this, WebrpcServerPanicError.prototype)
-  }
-}
+// export class WebrpcServerPanicError extends WebrpcError {
+//   constructor(
+//     name: string = 'WebrpcServerPanic',
+//     code: number = -6,
+//     message: string = `server panic`,
+//     status: number = 500,
+//     cause?: string
+//   ) {
+//     super(name, code, message, status, cause)
+//     Object.setPrototypeOf(this, WebrpcServerPanicError.prototype)
+//   }
+// }
 
-export class WebrpcInternalErrorError extends WebrpcError {
-  constructor(
-    name: string = 'WebrpcInternalError',
-    code: number = -7,
-    message: string = `internal error`,
-    status: number = 500,
-    cause?: string
-  ) {
-    super(name, code, message, status, cause)
-    Object.setPrototypeOf(this, WebrpcInternalErrorError.prototype)
-  }
-}
+// export class WebrpcInternalErrorError extends WebrpcError {
+//   constructor(
+//     name: string = 'WebrpcInternalError',
+//     code: number = -7,
+//     message: string = `internal error`,
+//     status: number = 500,
+//     cause?: string
+//   ) {
+//     super(name, code, message, status, cause)
+//     Object.setPrototypeOf(this, WebrpcInternalErrorError.prototype)
+//   }
+// }
 
-export class WebrpcClientAbortedError extends WebrpcError {
-  constructor(
-    name: string = 'WebrpcClientAborted',
-    code: number = -8,
-    message: string = `request aborted by client`,
-    status: number = 400,
-    cause?: string
-  ) {
-    super(name, code, message, status, cause)
-    Object.setPrototypeOf(this, WebrpcClientAbortedError.prototype)
-  }
-}
+// export class WebrpcClientAbortedError extends WebrpcError {
+//   constructor(
+//     name: string = 'WebrpcClientAborted',
+//     code: number = -8,
+//     message: string = `request aborted by client`,
+//     status: number = 400,
+//     cause?: string
+//   ) {
+//     super(name, code, message, status, cause)
+//     Object.setPrototypeOf(this, WebrpcClientAbortedError.prototype)
+//   }
+// }
 
-export class WebrpcStreamLostError extends WebrpcError {
-  constructor(
-    name: string = 'WebrpcStreamLost',
-    code: number = -9,
-    message: string = `stream lost`,
-    status: number = 400,
-    cause?: string
-  ) {
-    super(name, code, message, status, cause)
-    Object.setPrototypeOf(this, WebrpcStreamLostError.prototype)
-  }
-}
+// export class WebrpcStreamLostError extends WebrpcError {
+//   constructor(
+//     name: string = 'WebrpcStreamLost',
+//     code: number = -9,
+//     message: string = `stream lost`,
+//     status: number = 400,
+//     cause?: string
+//   ) {
+//     super(name, code, message, status, cause)
+//     Object.setPrototypeOf(this, WebrpcStreamLostError.prototype)
+//   }
+// }
 
-export class WebrpcStreamFinishedError extends WebrpcError {
-  constructor(
-    name: string = 'WebrpcStreamFinished',
-    code: number = -10,
-    message: string = `stream finished`,
-    status: number = 200,
-    cause?: string
-  ) {
-    super(name, code, message, status, cause)
-    Object.setPrototypeOf(this, WebrpcStreamFinishedError.prototype)
-  }
-}
+// export class WebrpcStreamFinishedError extends WebrpcError {
+//   constructor(
+//     name: string = 'WebrpcStreamFinished',
+//     code: number = -10,
+//     message: string = `stream finished`,
+//     status: number = 200,
+//     cause?: string
+//   ) {
+//     super(name, code, message, status, cause)
+//     Object.setPrototypeOf(this, WebrpcStreamFinishedError.prototype)
+//   }
+// }
 
 
-// Schema errors
+// // Schema errors
 
-export class UnauthorizedError extends WebrpcError {
-  constructor(
-    name: string = 'Unauthorized',
-    code: number = 1000,
-    message: string = `Unauthorized access`,
-    status: number = 401,
-    cause?: string
-  ) {
-    super(name, code, message, status, cause)
-    Object.setPrototypeOf(this, UnauthorizedError.prototype)
-  }
-}
+// export class UnauthorizedError extends WebrpcError {
+//   constructor(
+//     name: string = 'Unauthorized',
+//     code: number = 1000,
+//     message: string = `Unauthorized access`,
+//     status: number = 401,
+//     cause?: string
+//   ) {
+//     super(name, code, message, status, cause)
+//     Object.setPrototypeOf(this, UnauthorizedError.prototype)
+//   }
+// }
 
-export class PermissionDeniedError extends WebrpcError {
-  constructor(
-    name: string = 'PermissionDenied',
-    code: number = 1001,
-    message: string = `Permission denied`,
-    status: number = 403,
-    cause?: string
-  ) {
-    super(name, code, message, status, cause)
-    Object.setPrototypeOf(this, PermissionDeniedError.prototype)
-  }
-}
+// export class PermissionDeniedError extends WebrpcError {
+//   constructor(
+//     name: string = 'PermissionDenied',
+//     code: number = 1001,
+//     message: string = `Permission denied`,
+//     status: number = 403,
+//     cause?: string
+//   ) {
+//     super(name, code, message, status, cause)
+//     Object.setPrototypeOf(this, PermissionDeniedError.prototype)
+//   }
+// }
 
-export class SessionExpiredError extends WebrpcError {
-  constructor(
-    name: string = 'SessionExpired',
-    code: number = 1002,
-    message: string = `Session expired`,
-    status: number = 403,
-    cause?: string
-  ) {
-    super(name, code, message, status, cause)
-    Object.setPrototypeOf(this, SessionExpiredError.prototype)
-  }
-}
+// export class SessionExpiredError extends WebrpcError {
+//   constructor(
+//     name: string = 'SessionExpired',
+//     code: number = 1002,
+//     message: string = `Session expired`,
+//     status: number = 403,
+//     cause?: string
+//   ) {
+//     super(name, code, message, status, cause)
+//     Object.setPrototypeOf(this, SessionExpiredError.prototype)
+//   }
+// }
 
-export class GeoblockedError extends WebrpcError {
-  constructor(
-    name: string = 'Geoblocked',
-    code: number = 1003,
-    message: string = `Geoblocked region`,
-    status: number = 451,
-    cause?: string
-  ) {
-    super(name, code, message, status, cause)
-    Object.setPrototypeOf(this, GeoblockedError.prototype)
-  }
-}
+// export class GeoblockedError extends WebrpcError {
+//   constructor(
+//     name: string = 'Geoblocked',
+//     code: number = 1003,
+//     message: string = `Geoblocked region`,
+//     status: number = 451,
+//     cause?: string
+//   ) {
+//     super(name, code, message, status, cause)
+//     Object.setPrototypeOf(this, GeoblockedError.prototype)
+//   }
+// }
 
-export class RateLimitedError extends WebrpcError {
-  constructor(
-    name: string = 'RateLimited',
-    code: number = 1004,
-    message: string = `Rate-limited. Please slow down.`,
-    status: number = 429,
-    cause?: string
-  ) {
-    super(name, code, message, status, cause)
-    Object.setPrototypeOf(this, RateLimitedError.prototype)
-  }
-}
+// export class RateLimitedError extends WebrpcError {
+//   constructor(
+//     name: string = 'RateLimited',
+//     code: number = 1004,
+//     message: string = `Rate-limited. Please slow down.`,
+//     status: number = 429,
+//     cause?: string
+//   ) {
+//     super(name, code, message, status, cause)
+//     Object.setPrototypeOf(this, RateLimitedError.prototype)
+//   }
+// }
 
-export class CorsDisallowedError extends WebrpcError {
-  constructor(
-    name: string = 'CorsDisallowed',
-    code: number = 1005,
-    message: string = `CORS disallowed. JWT can't be used from a web app.`,
-    status: number = 403,
-    cause?: string
-  ) {
-    super(name, code, message, status, cause)
-    Object.setPrototypeOf(this, CorsDisallowedError.prototype)
-  }
-}
+// export class CorsDisallowedError extends WebrpcError {
+//   constructor(
+//     name: string = 'CorsDisallowed',
+//     code: number = 1005,
+//     message: string = `CORS disallowed. JWT can't be used from a web app.`,
+//     status: number = 403,
+//     cause?: string
+//   ) {
+//     super(name, code, message, status, cause)
+//     Object.setPrototypeOf(this, CorsDisallowedError.prototype)
+//   }
+// }
 
 
 export enum errors {
@@ -525,22 +539,78 @@ export enum WebrpcErrorCodes {
 export const webrpcErrorByCode: { [code: number]: any } = {
   [0]: WebrpcEndpointError,
   [-1]: WebrpcRequestFailedError,
-  [-2]: WebrpcBadRouteError,
-  [-3]: WebrpcBadMethodError,
-  [-4]: WebrpcBadRequestError,
-  [-5]: WebrpcBadResponseError,
-  [-6]: WebrpcServerPanicError,
-  [-7]: WebrpcInternalErrorError,
-  [-8]: WebrpcClientAbortedError,
-  [-9]: WebrpcStreamLostError,
-  [-10]: WebrpcStreamFinishedError,
-  [1000]: UnauthorizedError,
-  [1001]: PermissionDeniedError,
-  [1002]: SessionExpiredError,
-  [1003]: GeoblockedError,
-  [1004]: RateLimitedError,
-  [1005]: CorsDisallowedError,
+  // [-2]: WebrpcBadRouteError,
+  // [-3]: WebrpcBadMethodError,
+  // [-4]: WebrpcBadRequestError,
+  // [-5]: WebrpcBadResponseError,
+  // [-6]: WebrpcServerPanicError,
+  // [-7]: WebrpcInternalErrorError,
+  // [-8]: WebrpcClientAbortedError,
+  // [-9]: WebrpcStreamLostError,
+  // [-10]: WebrpcStreamFinishedError,
+  // [1000]: UnauthorizedError,
+  // [1001]: PermissionDeniedError,
+  // [1002]: SessionExpiredError,
+  // [1003]: GeoblockedError,
+  // [1004]: RateLimitedError,
+  // [1005]: CorsDisallowedError,
 }
+
+
+//
+// Webrpc
+//
 
 export type Fetch = (input: RequestInfo, init?: RequestInit) => Promise<Response>
 
+export const WebrpcHeader = "Webrpc"
+
+export const WebrpcHeaderValue = "webrpc@v0.28.1-1-ge2b37ad;gen-typescript@unknown;node-ts@v1.0.0"
+
+type WebrpcGenVersions = {
+  webrpcGenVersion: string;
+  codeGenName: string;
+  codeGenVersion: string;
+  schemaName: string;
+  schemaVersion: string;
+};
+
+export function VersionFromHeader(headers: Headers): WebrpcGenVersions {
+  const headerValue = headers.get(WebrpcHeader);
+  if (!headerValue) {
+    return {
+      webrpcGenVersion: "",
+      codeGenName: "",
+      codeGenVersion: "",
+      schemaName: "",
+      schemaVersion: "",
+    };
+  }
+
+  return parseWebrpcGenVersions(headerValue);
+}
+
+function parseWebrpcGenVersions(header: string): WebrpcGenVersions {
+  const versions = header.split(";");
+  if (versions.length < 3) {
+    return {
+      webrpcGenVersion: "",
+      codeGenName: "",
+      codeGenVersion: "",
+      schemaName: "",
+      schemaVersion: "",
+    };
+  }
+
+  const [_, webrpcGenVersion] = versions[0]!.split("@");
+  const [codeGenName, codeGenVersion] = versions[1]!.split("@");
+  const [schemaName, schemaVersion] = versions[2]!.split("@");
+
+  return {
+    webrpcGenVersion: webrpcGenVersion ?? "",
+    codeGenName: codeGenName ?? "",
+    codeGenVersion: codeGenVersion ?? "",
+    schemaName: schemaName ?? "",
+    schemaVersion: schemaVersion ?? "",
+  };
+}

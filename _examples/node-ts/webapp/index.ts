@@ -9,11 +9,11 @@ const fetchWithWebrpcHeaderParsing = async (input: RequestInfo | URL, init?: Req
 	return res
 }
 
-const exampleClient = new Example('http://localhost:3000', fetchWithWebrpcHeaderParsing)
+const example = new Example('http://localhost:3000', fetchWithWebrpcHeaderParsing)
 
 async function onPingClick(pingText: HTMLElement) {
 	try {
-		await exampleClient.ping({})
+		await example.ping({})
 		pingText.textContent = 'PONG'
 	} catch (error) {
 		if (error instanceof WebrpcError) {
@@ -25,7 +25,7 @@ async function onPingClick(pingText: HTMLElement) {
 
 async function onGetUserClick(usernameText: HTMLElement) {
 	try {
-		const { user } = await exampleClient.getUser({ userId: 1 })
+		const { user } = await example.getUser({ userId: 1 })
 		console.log('getUser() responded with:', { user })
 		usernameText.textContent = user.USERNAME
 	} catch (error) {
@@ -36,9 +36,22 @@ async function onGetUserClick(usernameText: HTMLElement) {
 	}
 }
 
+async function onGetUserWithErrorClick(usernameWithErrorText: HTMLElement) {
+	try {
+		const { user } = await example.getUser({ userId: 911 })
+		console.log('getUser() responded with:', { user })
+		usernameWithErrorText.textContent = user.USERNAME
+	} catch (error) {
+		if (error instanceof WebrpcError) {
+			console.error(error)
+			usernameWithErrorText.textContent = `error: ${error.message}, cause: ${error.cause}`
+		}
+	}
+}
+
 async function onGetArticleClick(articleText: HTMLElement) {
 	try {
-		const article = await exampleClient.getArticle({ articleId: 1 })
+		const article = await example.getArticle({ articleId: 1 })
 		console.log('getArticle() responded with:', { article })
 		articleText.textContent = `Title: ${article.title}\n\nContent: ${article.content}`
 	} catch (error) {
@@ -54,6 +67,8 @@ document.addEventListener('DOMContentLoaded', () => {
 	const pingText = document.getElementById('js-ping-text')
 	const getUserButton = document.getElementById('js-get-user-btn')
 	const usernameText = document.getElementById('js-username-text')
+	const getUserWithErrorButton = document.getElementById('js-get-user-error-btn')
+	const usernameWithErrorText = document.getElementById('js-username-error-text')
 	const getArticleButton = document.getElementById('js-get-article-btn')
 	const articleText = document.getElementById('js-article-text')
 
@@ -67,6 +82,12 @@ document.addEventListener('DOMContentLoaded', () => {
 		console.log('error getting username HTML elements')
 	} else {
 		getUserButton.addEventListener('click', () => onGetUserClick(usernameText))
+	}
+
+	if (!getUserWithErrorButton || !usernameWithErrorText) {
+		console.log('error getting username HTML elements')
+	} else {
+		getUserWithErrorButton.addEventListener('click', () => onGetUserWithErrorClick(usernameWithErrorText))
 	}
 
 	if (!getArticleButton || !articleText) {
