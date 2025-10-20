@@ -1,5 +1,5 @@
 import http, { IncomingMessage, ServerResponse } from 'node:http'
-import { HttpHandler, createWebrpcServerHandler, RequestContext, createRequestContext, composeHttpHandler, sendJson } from './helpers'
+import { HttpHandler, createHttpEntrypoint, createWebrpcServerHandler, RequestContext, composeHttpHandler, sendJson } from './helpers'
 import { Kind, ExampleServer, serveExampleRpc } from './server.gen'
 import { withLogging, withTrace, withCors } from './middleware'
 
@@ -28,7 +28,7 @@ const exampleService: ExampleServer<RequestContext> = {
   }
 }
 
-// Main routes entrypoint of the service
+// Main routes of the service
 const routes = (): HttpHandler  => {
   const rpcHandler = createWebrpcServerHandler(exampleService, serveExampleRpc)
 
@@ -65,31 +65,7 @@ const routes = (): HttpHandler  => {
 // Compose middleware chain and primary routes entrypoint handler
 const handler = composeHttpHandler([withLogging, withTrace, withCors], routes())
 
-// Node http server bootstrap
-http.createServer(async (req, res) => {
-  const ctx = createRequestContext()
-
-  const abort = () => {
-    const controller: AbortController | undefined = (ctx as any)._controller
-    if (controller && !controller.signal.aborted) controller.abort()
-  }
-  req.once('aborted', abort)
-  res.once('close', abort)
-
-  try {
-    await handler(ctx, req, res)
-  } catch (err: any) {
-    console.error(`[ERR ${ctx.reqId}]`, err?.message || err)
-    if (!res.headersSent) {
-      res.writeHead(500, { 'Content-Type': 'application/json' })
-    }
-    if (!res.writableEnded) {
-      const body = ctx.abort.aborted
-        ? { msg: 'client closed request', reqId: ctx.reqId }
-        : { msg: 'internal error', reqId: ctx.reqId }
-      res.end(JSON.stringify(body))
-    }
-  }
-}).listen(3000, () => {
+// Node http server bootstrap (ensure handler is passed)
+http.createServer(createHttpEntrypoint(handler)).listen(3000, () => {
   console.log("Server running at http://localhost:3000/")
 })

@@ -51,6 +51,34 @@ export interface WebrpcResult {
   body: any
 }
 
+export const createHttpEntrypoint = (handler: HttpHandler) => {
+  return async (req: IncomingMessage, res: ServerResponse) => {
+    const ctx = createRequestContext()
+
+    const abort = () => {
+      const controller: AbortController | undefined = (ctx as any)._controller
+      if (controller && !controller.signal.aborted) controller.abort()
+    }
+    req.once('aborted', abort)
+    res.once('close', abort)
+
+    try {
+      await handler(ctx, req, res)
+    } catch (err: any) {
+      console.error(`[ERR ${ctx.reqId}]`, err?.message || err)
+      if (!res.headersSent) {
+        res.writeHead(500, { 'Content-Type': 'application/json' })
+      }
+      if (!res.writableEnded) {
+        const body = ctx.abort.aborted
+          ? { msg: 'client closed request', reqId: ctx.reqId }
+          : { msg: 'internal error', reqId: ctx.reqId }
+        res.end(JSON.stringify(body))
+      }
+    }
+  }
+}
+
 export const createWebrpcServerHandler = <S, C extends RequestContext>(service: S, serveRpc: ServeWebrpcFn<S, C>): HttpHandler<C> => {
   return async (ctx: C, req: IncomingMessage, res: ServerResponse): Promise<void> => {
     const url = req.url || ''
