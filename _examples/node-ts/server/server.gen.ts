@@ -137,14 +137,19 @@ const dispatchExampleRequest = async <Context>(service: ExampleServer<Context>, 
       return service.ping(ctx, payload || {})
     case 'GetUser':
       if (!('userId' in payload)) {
-        throw new WebrpcError({ cause: "Missing Argument `userId`" })
+        throw new WebrpcError({ cause: "Missing argument `userId`" })
       }
       if ('userId' in payload && !validateType(payload['userId'], 'number')) {
-        throw new WebrpcError({ cause: "Invalid Argument: userId" })
+        throw new WebrpcError({ cause: "Invalid argument: userId" })
       }
       return await service.getUser(ctx, payload || {})
     case 'GetArticle':
-      // TODO: validate args ......
+      if (!('articleId' in payload)) {
+        throw new WebrpcError({ cause: "Missing argument `articleId`" })
+      }
+      if ('articleId' in payload && !validateType(payload['articleId'], 'number')) {
+        throw new WebrpcError({ cause: "Invalid argument: articleId" })
+      }
       return service.getArticle(ctx, payload || {})
     default:
       throw new WebrpcEndpointError({ cause: 'method not found', status: 404 })
