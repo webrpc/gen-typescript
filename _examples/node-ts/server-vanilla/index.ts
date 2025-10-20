@@ -1,71 +1,9 @@
 import http, { IncomingMessage, ServerResponse } from 'node:http'
-import { HttpHandler, createWebrpcServerHandler, RequestContext, createRequestContext, sendJson } from './helpers'
+import { HttpHandler, createWebrpcServerHandler, RequestContext, createRequestContext, composeHttpHandler, sendJson } from './helpers'
 import { Kind, ExampleServer, serveExampleRpc } from './server.gen'
-import { randomUUID } from 'node:crypto'
+import { withLogging, withTrace } from './middleware'
 
-// --- Middleware: logging (context-aware) ---
-function withLogging(next: HttpHandler): HttpHandler {
-  return async (ctx, req, res) => {
-    const traceId = ctx.reqId
-    console.log(`[REQ ${traceId}] ${req.method} ${req.url}`)
-    try {
-      await next(ctx, req, res)
-    } finally {
-      const end = performance.now()
-      const durationMs = end - ctx.start
-      console.log(`[RES ${traceId}] ${req.method} ${req.url} -> ${res.statusCode} (${durationMs.toFixed(3)}ms)`)
-    }
-  }
-}
-
-// --- Middleware: simple trace id header example ---
-function withTrace(next: HttpHandler): HttpHandler {
-  return async (ctx, req, res) => {
-    ctx.set('traceId', randomUUID())
-    await next(ctx, req, res)
-    if (!res.headersSent) {
-      res.setHeader('X-Trace-Id', ctx.reqId)
-    }
-  }
-}
-
-// --- Main handler factory (returns context-aware handler) ---
-function mainHandler(): HttpHandler {
-  const rpcHandler = createWebrpcServerHandler(exampleService, serveExampleRpc)
-
-  // Return the actual request handler (async because we use await inside)
-  return async (ctx: RequestContext, req: IncomingMessage, res: ServerResponse): Promise<void> => {
-    const url = req.url
-
-    // First try RPC routing (/rpc/*)
-    if (url?.startsWith('/rpc/')) {
-      await rpcHandler(ctx, req, res)
-      return
-    }
-
-    // Other routes
-    switch (url) {
-      case "/": {
-        res.writeHead(200, { "Content-Type": "text/plain" })
-        res.end(`Hello world`)// (req ${ctx.var.traceId})\n`)
-        return
-      }
-      case "/json": {
-        sendJson(res, 200, { ok: true, time: new Date().toISOString() })//, traceId: ctx.var.traceId })
-        return
-      }
-      default: {
-        res.writeHead(404, { "Content-Type": "text/plain" })
-        res.end("Not Found\n")
-        return
-      }
-    }
-  }
-}
-
-// ---------------------------------------------------------------------------
-// ExampleServer implementation (in-memory demo)
-// ---------------------------------------------------------------------------
+// ExampleServer RPC implementation of the webrpc service definition
 const exampleService: ExampleServer<RequestContext> = {
   async ping() {
     return {}
@@ -90,10 +28,44 @@ const exampleService: ExampleServer<RequestContext> = {
   }
 }
 
-// --- Compose middleware chain & start server ---
-// Build the base handler once (could rebuild per request if needed)
-const handler: HttpHandler = withLogging(withTrace(mainHandler()))
+// Main routes entrypoint of the service
+const routes = (): HttpHandler  => {
+  const rpcHandler = createWebrpcServerHandler(exampleService, serveExampleRpc)
 
+  // Return the actual request handler (async because we use await inside)
+  return async (ctx: RequestContext, req: IncomingMessage, res: ServerResponse): Promise<void> => {
+    const url = req.url
+
+    // First try RPC routing (/rpc/*)
+    if (url?.startsWith('/rpc/')) {
+      await rpcHandler(ctx, req, res)
+      return
+    }
+
+    // Other routes
+    switch (url) {
+      case "/": {
+        res.writeHead(200, { "Content-Type": "text/plain" })
+        res.end(`Hello world (req ${ctx.reqId})\n`)
+        return
+      }
+      case "/json": {
+        sendJson(res, 200, { ok: true, time: new Date().toISOString(), reqId: ctx.reqId })
+        return
+      }
+      default: {
+        res.writeHead(404, { "Content-Type": "text/plain" })
+        res.end("Not Found\n")
+        return
+      }
+    }
+  }
+}
+
+// Compose middleware chain and primary routes entrypoint handler
+const handler = composeHttpHandler([withLogging, withTrace], routes())
+
+// Node http server bootstrap
 http.createServer(async (req, res) => {
   const ctx = createRequestContext()
 
@@ -101,8 +73,8 @@ http.createServer(async (req, res) => {
     const controller: AbortController | undefined = (ctx as any)._controller
     if (controller && !controller.signal.aborted) controller.abort()
   }
-  req.on('aborted', abort)
-  res.on('close', abort)
+  req.once('aborted', abort)
+  res.once('close', abort)
 
   try {
     await handler(ctx, req, res)

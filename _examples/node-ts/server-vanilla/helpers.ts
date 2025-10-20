@@ -23,7 +23,7 @@ export interface RequestContext {
   _controller?: AbortController
 }
 
-export function createRequestContext(): RequestContext {
+export const createRequestContext = (): RequestContext => {
   const start = performance.now()
   const controller = new AbortController()
   const ctx: RequestContext = {
@@ -41,8 +41,9 @@ export function createRequestContext(): RequestContext {
   return ctx
 }
 
-// Attempting higher-kinded types like `Service<T> = T<RequestContext>` isn't supported in TS.
-// Instead define an explicit function shape for the RPC serving helper when context is RequestContext.
+// Function that, given a service + ctx + url + body, either handles the RPC and returns a result, or null if pattern mismatch.
+export type ServeWebrpcFn<S, C extends RequestContext> = (service: S, ctx: C, urlPath: string, body: any) => Promise<WebrpcResult | null>
+
 export interface WebrpcResult {
   method: string
   status: number
@@ -50,24 +51,39 @@ export interface WebrpcResult {
   body: any
 }
 
-// Function that, given a service + ctx + url + body, either handles the RPC and returns a result, or null if pattern mismatch.
-export type ServeWebrpcFn<S, C extends RequestContext> = (service: S, ctx: C, urlPath: string, body: any) => Promise<WebrpcResult | null>
-
-
-export function createWebrpcServerHandler<S, C extends RequestContext>(service: S, serveRpc: ServeWebrpcFn<S, C>): HttpHandler<C> {
-  return async function handler(ctx: C, req: IncomingMessage, res: ServerResponse): Promise<void> {
+export const createWebrpcServerHandler = <S, C extends RequestContext>(service: S, serveRpc: ServeWebrpcFn<S, C>): HttpHandler<C> => {
+  return async (ctx: C, req: IncomingMessage, res: ServerResponse): Promise<void> => {
     const url = req.url || ''
     if (!url.startsWith('/rpc/')) return // not our RPC route; caller will continue
 
     // Accept both GET & POST/PUT/PATCH for simplicity (GET => empty object)
     const methodVerb = (req.method || 'GET').toUpperCase()
     let rawBody = ''
-    if (methodVerb === 'POST' || methodVerb === 'PUT' || methodVerb === 'PATCH') {
+    if (methodVerb === 'POST') {
       rawBody = await new Promise<string>((resolve, reject) => {
         let data = ''
-        req.on('data', (chunk: Buffer) => { data += chunk.toString('utf8') })
-        req.on('end', () => resolve(data))
-        req.on('error', reject)
+        const onData = (chunk: Buffer) => { data += chunk.toString('utf8') }
+        const onEnd = () => { cleanup(); resolve(data) }
+        const onError = (err: Error) => { cleanup(); reject(err) }
+        const onAborted = () => { cleanup(); reject(new Error('request aborted')) }
+
+        const cleanup = () => {
+          req.off('data', onData)
+          req.off('end', onEnd)
+          req.off('error', onError)
+          req.off('aborted', onAborted)
+        }
+
+        req.on('data', onData)
+        req.on('end', onEnd)
+        req.on('error', onError)
+        req.on('aborted', onAborted)
+
+        // If already aborted before listeners attached
+        if ((req as any).aborted || ctx.abort.aborted) {
+          cleanup()
+          reject(new Error('request aborted'))
+        }
       })
     }
 
@@ -96,8 +112,17 @@ export function createWebrpcServerHandler<S, C extends RequestContext>(service: 
   }
 }
 
+// Generic middleware composer. Applies middleware array in order so that
+// composeHttpHandler([a, b], h) => a(b(h)).
+export const composeHttpHandler = <C = RequestContext>(
+  middleware: Array<(next: HttpHandler<C>) => HttpHandler<C>>, 
+  handler: HttpHandler<C>
+): HttpHandler<C> => {
+  return middleware.reduceRight<HttpHandler<C>>((acc, mw) => mw(acc), handler)
+}
+
 // Simple JSON helper (typed) – narrows headers & body
-export function sendJson(res: ServerResponse, status: number, body: unknown): void {
+export const sendJson = (res: ServerResponse, status: number, body: unknown): void => {
   const payload = JSON.stringify(body)
   res.writeHead(status, {
     "Content-Type": "application/json",
