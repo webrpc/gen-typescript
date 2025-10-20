@@ -131,19 +131,21 @@ export const serveExampleRpc = async <Context>(service: ExampleServer<Context>, 
   }
 }
 
-// Small pure dispatcher (no framework concepts)
 const dispatchExampleRequest = async <Context>(service: ExampleServer<Context>, ctx: Context, method: string, payload: any) => {
   switch (method) {
     case 'Ping':
       return service.ping(ctx, payload || {})
     case 'GetUser':
-      if (!payload || typeof payload.userId !== 'number') throw new WebrpcEndpointError({ cause: 'Missing or invalid argument `userId`', status: 400 })
-      const userResp = await service.getUser(ctx, { userId: payload.userId })
-      if (!userResp || typeof userResp.code !== 'number' || !userResp.user) throw new WebrpcEndpointError({ cause: 'internal', status: 500 })
-      return userResp
+      if (!('userId' in payload)) {
+        throw new WebrpcError({ cause: "Missing Argument `userId`" })
+      }
+      if ('userId' in payload && !validateType(payload['userId'], 'number')) {
+        throw new WebrpcError({ cause: "Invalid Argument: userId" })
+      }
+      return await service.getUser(ctx, payload || {})
     case 'GetArticle':
-      if (!payload || typeof payload.articleId !== 'number') throw new WebrpcEndpointError({ cause: 'Missing or invalid argument `articleId`', status: 400 })
-      return service.getArticle(ctx, { articleId: payload.articleId })
+      // TODO: validate args ......
+      return service.getArticle(ctx, payload || {})
     default:
       throw new WebrpcEndpointError({ cause: 'method not found', status: 404 })
   }
@@ -172,7 +174,7 @@ export class WebrpcError extends Error {
     Object.setPrototypeOf(this, WebrpcError.prototype)
   }
 
-  static new (payload: any): WebrpcError {
+  static new(payload: any): WebrpcError {
     return new this({ message: payload.message, code: payload.code, status: payload.status, cause: payload.cause })
   }
 }
