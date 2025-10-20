@@ -240,16 +240,11 @@ export class WebrpcError extends Error {
   status: number
   cause?: string
 
-  /** @deprecated Use message instead of msg. Deprecated in webrpc v0.11.0. */
-  // TODO: its time to get rid of this now.
-  msg: string
-
   constructor(name: string, code: number, message: string, status: number, cause?: string) {
     super(message)
     this.name = name || 'WebrpcError'
     this.code = typeof code === 'number' ? code : 0
     this.message = message || `endpoint error ${this.code}`
-    this.msg = this.message
     this.status = typeof status === 'number' ? status : 0
     this.cause = cause
     Object.setPrototypeOf(this, WebrpcError.prototype)

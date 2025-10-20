@@ -1,6 +1,6 @@
 import http, { IncomingMessage, ServerResponse } from 'node:http'
 import { HttpHandler, createHttpEntrypoint, createWebrpcServerHandler, RequestContext, composeHttpHandler, sendJson } from './helpers'
-import { Kind, ExampleServer, serveExampleRpc } from './server.gen'
+import { Kind, ExampleServer, serveExampleRpc, WebrpcEndpointError } from './server.gen'
 import { withLogging, withTrace, withCors } from './middleware'
 
 // ExampleServer RPC implementation of the webrpc service definition
@@ -10,6 +10,11 @@ const exampleService: ExampleServer<RequestContext> = {
   },
   async getUser(ctx, { userId }) {
     const traceId = ctx.get<string>('traceId') || ''
+
+		if (userId === 911) {
+			throw new WebrpcEndpointError({ cause: 'User 911 is forbidden' })
+		}
+
     return {
       code: 200,
       user: {

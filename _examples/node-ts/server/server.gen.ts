@@ -5,10 +5,6 @@
 //
 // webrpc-gen -schema=service.ridl -target=../../../gen-typescript -server -out=./server/server.gen.ts
 
-export const WebrpcHeader = "Webrpc"
-
-export const WebrpcHeaderValue = "webrpc@v0.28.1-1-ge2b37ad;gen-typescript@unknown;node-ts@v1.0.0"
-
 // Webrpc description and code-gen version
 export const WebrpcVersion = "v1"
 
@@ -18,52 +14,17 @@ export const WebrpcSchemaVersion = "v1.0.0"
 // Schema hash generated from your RIDL schema
 export const WebrpcSchemaHash = "21701cae51b73d035bf2180831cdb38220bbbccc"
 
-type WebrpcGenVersions = {
-  webrpcGenVersion: string;
-  codeGenName: string;
-  codeGenVersion: string;
-  schemaName: string;
-  schemaVersion: string;
-};
 
-export function VersionFromHeader(headers: Headers): WebrpcGenVersions {
-  const headerValue = headers.get(WebrpcHeader);
-  if (!headerValue) {
-    return {
-      webrpcGenVersion: "",
-      codeGenName: "",
-      codeGenVersion: "",
-      schemaName: "",
-      schemaVersion: "",
-    };
-  }
+//
+// Server interface
+//
 
-  return parseWebrpcGenVersions(headerValue);
-}
-
-function parseWebrpcGenVersions(header: string): WebrpcGenVersions {
-  const versions = header.split(";");
-  if (versions.length < 3) {
-    return {
-      webrpcGenVersion: "",
-      codeGenName: "",
-      codeGenVersion: "",
-      schemaName: "",
-      schemaVersion: "",
-    };
-  }
-
-  const [_, webrpcGenVersion] = versions[0]!.split("@");
-  const [codeGenName, codeGenVersion] = versions[1]!.split("@");
-  const [schemaName, schemaVersion] = versions[2]!.split("@");
-
-  return {
-    webrpcGenVersion: webrpcGenVersion ?? "",
-    codeGenName: codeGenName ?? "",
-    codeGenVersion: codeGenVersion ?? "",
-    schemaName: schemaName ?? "",
-    schemaVersion: schemaVersion ?? "",
-  };
+// Generic server interface accepting a user-defined context object C which
+// will be provided as the first argument to every RPC handler.
+export interface ExampleServer<Context = unknown> {
+  ping(ctx: Context, req: PingRequest): Promise<PingResponse>
+  getUser(ctx: Context, req: GetUserRequest): Promise<GetUserResponse>
+  getArticle(ctx: Context, req: GetArticleRequest): Promise<GetArticleResponse>
 }
 
 //
@@ -96,21 +57,6 @@ export interface GetArticleResponse {
   content?: string
 }
 
-export interface ExampleClient {
-  /**
-   * @deprecated Use /health endpoint instead.
-   */
-  ping(headers?: object, signal?: AbortSignal): Promise<PingResponse>
-  /**
-   * GetUser returns a user by ID.
-   */
-  getUser(args: GetUserRequest, headers?: object, signal?: AbortSignal): Promise<GetUserResponse>
-  /**
-   * Get article by id.
-   */
-  getArticle(req: GetArticleRequest, headers?: object, signal?: AbortSignal): Promise<GetArticleResponse>
-}
-
 // TODO: lets switch to names.. Request and Response suffixes ..? .. but maybe it'll break a lot of apps?
 // consider adding a flag here for it..? at generation time.. like --compat mode ..
 
@@ -138,27 +84,387 @@ export interface GetUserResponse {
 // }
 
 
+// -----------------------------------------------------------------------------
+// Lightweight, framework-agnostic helpers (added manually for cleaner usage)
+// -----------------------------------------------------------------------------
+// These helpers provide a tiny dispatch layer so application code (e.g. Fastify,
+// Express, native http) can register a single handler without crafting req/res
+// shims. They intentionally keep validation minimal – just presence/type checks
+// similar to the original generated logic.
 
 //
-// Server
+// Server handler
 //
 
-// Generic server interface accepting a user-defined context object C which
-// will be provided as the first argument to every RPC handler.
-export interface ExampleServer<Context = unknown> {
-  ping(ctx: Context, req: PingRequest): Promise<PingResponse>
-  getUser(ctx: Context, req: GetUserRequest): Promise<GetUserResponse>
-  getArticle(ctx: Context, req: GetArticleRequest): Promise<GetArticleResponse>
-}
-
-export class WebrpcError extends Error {
-  statusCode?: number
-  constructor(msg: string = "error", statusCode?: number) {
-    super("webrpc error: " + msg);
-    Object.setPrototypeOf(this, WebrpcError.prototype);
-    this.statusCode = statusCode;
+// Ultra-thin helper: given full URL and body, resolve & execute if it's an Example RPC.
+// Returns null if the URL does not target the Example service (so caller can 404).
+export const serveExampleRpc = async <Context>(service: ExampleServer<Context>, ctx: Context, urlPath: string, body: any) => {
+  if (!urlPath.startsWith('/rpc/')) return null
+  const parts = urlPath.split('/').filter(Boolean)
+  if (parts.length !== 3 || parts[0] !== 'rpc' || parts[1] !== 'Example') return null
+  const method = parts[2]
+  try {
+    const result = await dispatchExampleRequest(service, ctx, method, body)
+    return {
+      method,
+      status: 200,
+      headers: { [WebrpcHeader]: WebrpcHeaderValue, 'Content-Type': 'application/json' },
+      body: result ?? {}
+    }
+  } catch (err: any) {
+    if (err instanceof WebrpcError) {
+      const status = err.status || 400
+      return {
+        method,
+        status,
+        headers: { [WebrpcHeader]: WebrpcHeaderValue, 'Content-Type': 'application/json' },
+        body: err
+      }
+    } else {
+      return {
+        method,
+        status: 400,
+        headers: { [WebrpcHeader]: WebrpcHeaderValue, 'Content-Type': 'application/json' },
+        body: new WebrpcError({ message: err?.message })
+      }
+    }
   }
 }
+
+// Small pure dispatcher (no framework concepts)
+const dispatchExampleRequest = async <Context>(service: ExampleServer<Context>, ctx: Context, method: string, payload: any) => {
+  switch (method) {
+    case 'Ping':
+      return service.ping(ctx, payload || {})
+    case 'GetUser':
+      if (!payload || typeof payload.userId !== 'number') throw new WebrpcEndpointError({ cause: 'Missing or invalid argument `userId`', status: 400 })
+      const userResp = await service.getUser(ctx, { userId: payload.userId })
+      if (!userResp || typeof userResp.code !== 'number' || !userResp.user) throw new WebrpcEndpointError({ cause: 'internal', status: 500 })
+      return userResp
+    case 'GetArticle':
+      if (!payload || typeof payload.articleId !== 'number') throw new WebrpcEndpointError({ cause: 'Missing or invalid argument `articleId`', status: 400 })
+      return service.getArticle(ctx, { articleId: payload.articleId })
+    default:
+      throw new WebrpcEndpointError({ cause: 'method not found', status: 404 })
+  }
+}
+
+//
+// Errors
+//
+
+type WebrpcErrorParams = { name?: string, code?: number, message?: string, status?: number, cause?: string }
+
+export class WebrpcError extends Error {
+  name: string
+  code: number
+  message: string
+  status: number
+  cause?: string
+
+  constructor(error: WebrpcErrorParams = {}) {
+    super(error.message)
+    this.name = error.name || 'WebrpcError'
+    this.code = typeof error.code === 'number' ? error.code : 0
+    this.message = error.message || `endpoint error ${this.code}`
+    this.status = typeof error.status === 'number' ? error.status : 400
+    this.cause = error.cause
+    Object.setPrototypeOf(this, WebrpcError.prototype)
+  }
+
+  static new (payload: any): WebrpcError {
+    return new this({ message: payload.message, code: payload.code, status: payload.status, cause: payload.cause })
+  }
+}
+
+// Webrpc errors
+
+export class WebrpcEndpointError extends WebrpcError {
+  constructor(error: WebrpcErrorParams = {}) {
+    super(error)
+    this.name = error.name || 'WebrpcEndpoint'
+    this.code = typeof error.code === 'number' ? error.code : 0
+    this.message = error.message || `endpoint error ${this.code}`
+    this.status = typeof error.status === 'number' ? error.status : 400
+    this.cause = error.cause
+    Object.setPrototypeOf(this, WebrpcEndpointError.prototype)
+  }
+}
+
+export class WebrpcRequestFailedError extends WebrpcError {
+  constructor(error: WebrpcErrorParams = {}) {
+    super(error)
+    this.name = error.name || 'WebrpcRequestFailed'
+    this.code = typeof error.code === 'number' ? error.code : -1
+    this.message = error.message || `endpoint error ${this.code}`
+    this.status = typeof error.status === 'number' ? error.status : 400
+    this.cause = error.cause
+    Object.setPrototypeOf(this, WebrpcRequestFailedError.prototype)
+  }
+}
+
+// export class WebrpcBadRouteError extends WebrpcError {
+//   constructor(
+//     name: string = 'WebrpcBadRoute',
+//     status: number = 404,
+//     code: number = -2,
+//     message: string = `bad route`,
+//     cause?: string
+//   ) {
+//     super(name, status, code, message, cause)
+//     Object.setPrototypeOf(this, WebrpcBadRouteError.prototype)
+//   }
+// }
+
+// export class WebrpcBadMethodError extends WebrpcError {
+//   constructor(
+//     name: string = 'WebrpcBadMethod',
+//     status: number = 405,
+//     code: number = -3,
+//     message: string = `bad method`,
+//     cause?: string
+//   ) {
+//     super(name, status, code, message, cause)
+//     Object.setPrototypeOf(this, WebrpcBadMethodError.prototype)
+//   }
+// }
+
+// export class WebrpcBadRequestError extends WebrpcError {
+//   constructor(
+//     name: string = 'WebrpcBadRequest',
+//     status: number = 400,
+//     code: number = -4,
+//     message: string = `bad request`,
+//     cause?: string
+//   ) {
+//     super(name, status, code, message, cause)
+//     Object.setPrototypeOf(this, WebrpcBadRequestError.prototype)
+//   }
+// }
+
+// export class WebrpcBadResponseError extends WebrpcError {
+//   constructor(
+//     name: string = 'WebrpcBadResponse',
+//     status: number = 500,
+//     code: number = -5,
+//     message: string = `bad response`,
+//     cause?: string
+//   ) {
+//     super(name, status, code, message, cause)
+//     Object.setPrototypeOf(this, WebrpcBadResponseError.prototype)
+//   }
+// }
+
+// export class WebrpcServerPanicError extends WebrpcError {
+//   constructor(
+//     name: string = 'WebrpcServerPanic',
+//     status: number = 500,
+//     code: number = -6,
+//     message: string = `server panic`,
+//     cause?: string
+//   ) {
+//     super(name, status, code, message, cause)
+//     Object.setPrototypeOf(this, WebrpcServerPanicError.prototype)
+//   }
+// }
+
+// export class WebrpcInternalErrorError extends WebrpcError {
+//   constructor(
+//     name: string = 'WebrpcInternalError',
+//     status: number = 500,
+//     code: number = -7,
+//     message: string = `internal error`,
+//     cause?: string
+//   ) {
+//     super(name, status, code, message, cause)
+//     Object.setPrototypeOf(this, WebrpcInternalErrorError.prototype)
+//   }
+// }
+
+// export class WebrpcClientAbortedError extends WebrpcError {
+//   constructor(
+//     name: string = 'WebrpcClientAborted',
+//     status: number = 400,
+//     code: number = -8,
+//     message: string = `request aborted by client`,
+//     cause?: string
+//   ) {
+//     super(name, status, code, message, cause)
+//     Object.setPrototypeOf(this, WebrpcClientAbortedError.prototype)
+//   }
+// }
+
+// export class WebrpcStreamLostError extends WebrpcError {
+//   constructor(
+//     name: string = 'WebrpcStreamLost',
+//     status: number = 400,
+//     code: number = -9,
+//     message: string = `stream lost`,
+//     cause?: string
+//   ) {
+//     super(name, status, code, message, cause)
+//     Object.setPrototypeOf(this, WebrpcStreamLostError.prototype)
+//   }
+// }
+
+// export class WebrpcStreamFinishedError extends WebrpcError {
+//   constructor(
+//     name: string = 'WebrpcStreamFinished',
+//     status: number = 200,
+//     code: number = -10,
+//     message: string = `stream finished`,
+//     cause?: string
+//   ) {
+//     super(name, status, code, message, cause)
+//     Object.setPrototypeOf(this, WebrpcStreamFinishedError.prototype)
+//   }
+// }
+
+
+// // Schema errors
+
+// export class UnauthorizedError extends WebrpcError {
+//   constructor(
+//     name: string = 'Unauthorized',
+//     status: number = 401,
+//     code: number = 1000,
+//     message: string = `Unauthorized access`,
+//     cause?: string
+//   ) {
+//     super(name, status, code, message, cause)
+//     Object.setPrototypeOf(this, UnauthorizedError.prototype)
+//   }
+// }
+
+// export class PermissionDeniedError extends WebrpcError {
+//   constructor(
+//     name: string = 'PermissionDenied',
+//     status: number = 403,
+//     code: number = 1001,
+//     message: string = `Permission denied`,
+//     cause?: string
+//   ) {
+//     super(name, status, code, message, cause)
+//     Object.setPrototypeOf(this, PermissionDeniedError.prototype)
+//   }
+// }
+
+// export class SessionExpiredError extends WebrpcError {
+//   constructor(
+//     name: string = 'SessionExpired',
+//     status: number = 403,
+//     code: number = 1002,
+//     message: string = `Session expired`,
+//     cause?: string
+//   ) {
+//     super(name, status, code, message, cause)
+//     Object.setPrototypeOf(this, SessionExpiredError.prototype)
+//   }
+// }
+
+// export class GeoblockedError extends WebrpcError {
+//   constructor(
+//     name: string = 'Geoblocked',
+//     status: number = 451,
+//     code: number = 1003,
+//     message: string = `Geoblocked region`,
+//     cause?: string
+//   ) {
+//     super(name, status, code, message, cause)
+//     Object.setPrototypeOf(this, GeoblockedError.prototype)
+//   }
+// }
+
+// export class RateLimitedError extends WebrpcError {
+//   constructor(
+//     name: string = 'RateLimited',
+//     status: number = 429,
+//     code: number = 1004,
+//     message: string = `Rate-limited. Please slow down.`,
+//     cause?: string
+//   ) {
+//     super(name, status, code, message, cause)
+//     Object.setPrototypeOf(this, RateLimitedError.prototype)
+//   }
+// }
+
+// export class CorsDisallowedError extends WebrpcError {
+//   constructor(
+//     name: string = 'CorsDisallowed',
+//     status: number = 403,
+//     code: number = 1005,
+//     message: string = `CORS disallowed. JWT can't be used from a web app.`,
+//     cause?: string
+//   ) {
+//     super(name, status, code, message, cause)
+//     Object.setPrototypeOf(this, CorsDisallowedError.prototype)
+//   }
+// }
+
+
+export enum errors {
+  WebrpcEndpoint = 'WebrpcEndpoint',
+  WebrpcRequestFailed = 'WebrpcRequestFailed',
+  WebrpcBadRoute = 'WebrpcBadRoute',
+  WebrpcBadMethod = 'WebrpcBadMethod',
+  WebrpcBadRequest = 'WebrpcBadRequest',
+  WebrpcBadResponse = 'WebrpcBadResponse',
+  WebrpcServerPanic = 'WebrpcServerPanic',
+  WebrpcInternalError = 'WebrpcInternalError',
+  WebrpcClientAborted = 'WebrpcClientAborted',
+  WebrpcStreamLost = 'WebrpcStreamLost',
+  WebrpcStreamFinished = 'WebrpcStreamFinished',
+  Unauthorized = 'Unauthorized',
+  PermissionDenied = 'PermissionDenied',
+  SessionExpired = 'SessionExpired',
+  Geoblocked = 'Geoblocked',
+  RateLimited = 'RateLimited',
+  CorsDisallowed = 'CorsDisallowed',
+}
+
+export enum WebrpcErrorCodes {
+  WebrpcEndpoint = 0,
+  WebrpcRequestFailed = -1,
+  WebrpcBadRoute = -2,
+  WebrpcBadMethod = -3,
+  WebrpcBadRequest = -4,
+  WebrpcBadResponse = -5,
+  WebrpcServerPanic = -6,
+  WebrpcInternalError = -7,
+  WebrpcClientAborted = -8,
+  WebrpcStreamLost = -9,
+  WebrpcStreamFinished = -10,
+  Unauthorized = 1000,
+  PermissionDenied = 1001,
+  SessionExpired = 1002,
+  Geoblocked = 1003,
+  RateLimited = 1004,
+  CorsDisallowed = 1005,
+}
+
+export const webrpcErrorByCode: { [code: number]: any } = {
+  [0]: WebrpcEndpointError,
+  [-1]: WebrpcRequestFailedError,
+  // [-2]: WebrpcBadRouteError,
+  // [-3]: WebrpcBadMethodError,
+  // [-4]: WebrpcBadRequestError,
+  // [-5]: WebrpcBadResponseError,
+  // [-6]: WebrpcServerPanicError,
+  // [-7]: WebrpcInternalErrorError,
+  // [-8]: WebrpcClientAbortedError,
+  // [-9]: WebrpcStreamLostError,
+  // [-10]: WebrpcStreamFinishedError,
+  // [1000]: UnauthorizedError,
+  // [1001]: PermissionDeniedError,
+  // [1002]: SessionExpiredError,
+  // [1003]: GeoblockedError,
+  // [1004]: RateLimitedError,
+  // [1005]: CorsDisallowedError,
+}
+
+//
+// MISC
+//
 
 const JS_TYPES = [
   "bigint",
@@ -247,64 +553,58 @@ const validateType = (value: any, type: string) => {
   return validator(value);
 }
 
-// -----------------------------------------------------------------------------
-// Lightweight, framework-agnostic helpers (added manually for cleaner usage)
-// -----------------------------------------------------------------------------
-// These helpers provide a tiny dispatch layer so application code (e.g. Fastify,
-// Express, native http) can register a single handler without crafting req/res
-// shims. They intentionally keep validation minimal – just presence/type checks
-// similar to the original generated logic.
+//
+// Webrpc
+//
 
+export const WebrpcHeader = "Webrpc"
 
+export const WebrpcHeaderValue = "webrpc@v0.28.1-1-ge2b37ad;gen-typescript@unknown;node-ts@v1.0.0"
 
-// Ultra-thin helper: given full URL and body, resolve & execute if it's an Example RPC.
-// Returns null if the URL does not target the Example service (so caller can 404).
-export const serveExampleRpc = async <Context>(service: ExampleServer<Context>, ctx: Context, urlPath: string, body: any) => {
-  if (!urlPath.startsWith('/rpc/')) return null
-  const parts = urlPath.split('/').filter(Boolean)
-  if (parts.length !== 3 || parts[0] !== 'rpc' || parts[1] !== 'Example') return null
-  const method = parts[2]
-  try {
-    const result = await dispatchExampleRequest(service, ctx, method, body)
+type WebrpcGenVersions = {
+  webrpcGenVersion: string;
+  codeGenName: string;
+  codeGenVersion: string;
+  schemaName: string;
+  schemaVersion: string;
+};
+
+export function VersionFromHeader(headers: Headers): WebrpcGenVersions {
+  const headerValue = headers.get(WebrpcHeader);
+  if (!headerValue) {
     return {
-      method,
-      status: 200,
-      headers: { [WebrpcHeader]: WebrpcHeaderValue, 'Content-Type': 'application/json' },
-      body: result ?? {}
-    }
-  } catch (err: any) {
-    if (err instanceof WebrpcError) {
-      const status = err.statusCode || 400
-      return {
-        method,
-        status,
-        headers: { [WebrpcHeader]: WebrpcHeaderValue, 'Content-Type': 'application/json' },
-        body: { msg: err.message, status, code: '' }
-      }
-    }
-    return {
-      method,
-      status: 400,
-      headers: { [WebrpcHeader]: WebrpcHeaderValue, 'Content-Type': 'application/json' },
-      body: { msg: err?.message || 'webrpc error', status: 400, code: '' }
-    }
+      webrpcGenVersion: "",
+      codeGenName: "",
+      codeGenVersion: "",
+      schemaName: "",
+      schemaVersion: "",
+    };
   }
+
+  return parseWebrpcGenVersions(headerValue);
 }
 
-// Small pure dispatcher (no framework concepts)
-const dispatchExampleRequest = async <Context>(service: ExampleServer<Context>, ctx: Context, method: string, payload: any) => {
-  switch (method) {
-    case 'Ping':
-      return service.ping(ctx, payload || {})
-    case 'GetUser':
-      if (!payload || typeof payload.userId !== 'number') throw new WebrpcError('Missing or invalid argument `userId`', 400)
-      const userResp = await service.getUser(ctx, { userId: payload.userId })
-      if (!userResp || typeof userResp.code !== 'number' || !userResp.user) throw new WebrpcError('internal', 500)
-      return userResp
-    case 'GetArticle':
-      if (!payload || typeof payload.articleId !== 'number') throw new WebrpcError('Missing or invalid argument `articleId`', 400)
-      return service.getArticle(ctx, { articleId: payload.articleId })
-    default:
-      throw new WebrpcError('method not found', 404)
+function parseWebrpcGenVersions(header: string): WebrpcGenVersions {
+  const versions = header.split(";");
+  if (versions.length < 3) {
+    return {
+      webrpcGenVersion: "",
+      codeGenName: "",
+      codeGenVersion: "",
+      schemaName: "",
+      schemaVersion: "",
+    };
   }
+
+  const [_, webrpcGenVersion] = versions[0]!.split("@");
+  const [codeGenName, codeGenVersion] = versions[1]!.split("@");
+  const [schemaName, schemaVersion] = versions[2]!.split("@");
+
+  return {
+    webrpcGenVersion: webrpcGenVersion ?? "",
+    codeGenName: codeGenName ?? "",
+    codeGenVersion: codeGenVersion ?? "",
+    schemaName: schemaName ?? "",
+    schemaVersion: schemaVersion ?? "",
+  };
 }
