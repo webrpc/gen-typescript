@@ -32,7 +32,7 @@ export interface ExampleClient {
   /**
    * Get article by id.
    */
-  getArticle(req: GetArticleRequest, headers?: object, signal?: AbortSignal): Promise<GetArticleResponse>
+  getArticle(req: GetArticleRequest, headers?: object, signal?: AbortSignal): Promise<GetArticleRequest>
 }
 
 
@@ -130,7 +130,7 @@ export class Example implements ExampleClient {
     })
   }
   
-  getArticle = (req: GetArticleRequest, headers?: object, signal?: AbortSignal): Promise<GetArticleResponse> => {
+  getArticle = (req: GetArticleRequest, headers?: object, signal?: AbortSignal): Promise<GetArticleRequest> => {
     return this.fetch(
       this.url('GetArticle'),
       createHttpRequest(req, headers, signal)).then((res) => {return buildResponse(res)
