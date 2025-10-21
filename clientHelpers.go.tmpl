@@ -2,7 +2,9 @@
 {{- $webrpcErrors := .WebrpcErrors -}}
 {{- $schemaErrors := .SchemaErrors -}}
 {{- $opts := .Opts -}}
-const createHTTPRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
+
+{{- "\n" -}}
+const createHttpRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
   const reqHeaders: {[key: string]: string} = { ...headers, 'Content-Type': 'application/json' }
   {{- if eq $opts.webrpcHeader true }}
   reqHeaders[WebrpcHeader] = WebrpcHeaderValue
@@ -36,6 +38,7 @@ const buildResponse = (res: Response): Promise<any> => {
 }
 
 export type Fetch = (input: RequestInfo, init?: RequestInit) => Promise<Response>
+
 {{if $opts.streaming}}
 export interface WebrpcStreamOptions<T> extends WebrpcOptions {
   onMessage: (message: T) => void;

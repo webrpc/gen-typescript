@@ -8,8 +8,8 @@
 // Client
 //
 
-{{- range .Services}}
-export class {{.Name}} implements {{.Name}} {
+{{- "\n" -}}{{- range .Services}}
+export class {{.Name}} implements {{.Name}}Client {
   protected hostname: string
   protected fetch: Fetch
   protected path = '/rpc/{{.Name}}/'
@@ -23,7 +23,7 @@ export class {{.Name}} implements {{.Name}} {
     return this.hostname + this.path + name
   }
   {{range $_, $method := .Methods}}
-  {{firstLetterToLower .Name}} = ({{template "methodInputs" dict "Method" . "TypeMap" $typeMap}}): {{if $method.StreamOutput}}WebrpcStreamController{{else}}Promise<{{$method.Name}}Return>{{end}} => {
+  {{firstLetterToLower .Name}} = ({{template "methodInputs" dict "Method" . "TypeMap" $typeMap}}): {{if $method.StreamOutput}}WebrpcStreamController{{else}}Promise<{{$method.Name}}{{if $opts.compat}}Return{{else}}Response{{end}}>{{end}} => {
   {{- if $method.StreamOutput }}
     const abortController = new AbortController();
     const abortSignal = abortController.signal
@@ -35,7 +35,7 @@ export class {{.Name}} implements {{.Name}} {
     }
 
     const _fetch = () => this.fetch(this.url('{{.Name}}'),
-      {{- if .Inputs | len }}createHTTPRequest(args, options.headers, abortSignal){{- else}}createHTTPRequest({}, options.headers, options.signal){{end }}
+      {{- if .Inputs | len }}createHttpRequest(req, options.headers, abortSignal){{- else}}createHttpRequest({}, options.headers, options.signal){{end }}
       ).then(async (res) => {
         await sseResponse(res, options, _fetch);
     }, (error) => {
@@ -51,8 +51,9 @@ export class {{.Name}} implements {{.Name}} {
   {{- else }}
     return this.fetch(
       this.url('{{.Name}}'),
-      {{ if .Inputs | len }}createHTTPRequest(args, headers, signal)).then((res) => { {{- else }}createHTTPRequest({}, headers, signal)
+      {{ if .Inputs | len }}createHttpRequest(req, headers, signal)).then((res) => { {{- else }}createHttpRequest({}, headers, signal)
       ).then((res) => { {{- end }}
+      {{- if eq $method.Succinct false}}
       return buildResponse(res).then(_data => {
         {{ if .Outputs | len -}}
         return {
@@ -62,6 +63,9 @@ export class {{.Name}} implements {{.Name}} {
         }
         {{- else }}return {}{{- end }}
       })
+      {{- else -}}
+      return buildResponse(res)
+      {{- end }}
     }, (error) => {
       throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
     })

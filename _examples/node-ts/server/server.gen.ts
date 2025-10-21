@@ -136,7 +136,7 @@ const dispatchExampleRequest = async <Context>(service: ExampleServer<Context>, 
   }
 }
 
-  
+
 
 //
 // Server type validators

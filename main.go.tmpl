@@ -81,13 +81,13 @@ export const WebrpcSchemaHash = "{{.SchemaHash}}"
 {{- "\n" -}}
 
 {{- if $opts.client -}}
-  {{template "clientInterface" dict "Services" .Services "Opts" $opts "TypeMap" $typeMap}}
+{{template "clientInterface" dict "Services" .Services "Opts" $opts "TypeMap" $typeMap}}
 {{- end -}}
 
 {{- "\n" -}}
 
 {{- if $opts.server -}}
-  {{template "serverInterface" dict "Services" .Services "Opts" $opts "TypeMap" $typeMap}}
+{{template "serverInterface" dict "Services" .Services "Opts" $opts "TypeMap" $typeMap}}
 {{- end -}}
 
 {{- "\n\n" -}}
@@ -97,15 +97,15 @@ export const WebrpcSchemaHash = "{{.SchemaHash}}"
 {{- "\n" -}}
 
 {{- if $opts.client -}}
-  {{template "client" dict "Services" .Services "Opts" $opts "TypeMap" $typeMap}}
-  {{template "clientHelpers" dict "WebrpcErrors" .WebrpcErrors "SchemaErrors" .Errors "Opts" $opts }}
+{{template "client" dict "Services" .Services "Opts" $opts "TypeMap" $typeMap}}
+{{template "clientHelpers" dict "WebrpcErrors" .WebrpcErrors "SchemaErrors" .Errors "Opts" $opts }}
 {{- end -}}
 
 {{- "\n" -}}
 
 {{- if $opts.server -}}
-  {{template "server" dict "Services" .Services "Opts" $opts "TypeMap" $typeMap}}
-  {{template "serverHelpers" dict "Types" .Types "TypeMap" $typeMap}}
+{{template "server" dict "Services" .Services "Opts" $opts "TypeMap" $typeMap}}
+{{template "serverHelpers" dict "Types" .Types "TypeMap" $typeMap}}
 {{- end -}}
 
 {{- "\n\n" -}}
