@@ -130,7 +130,7 @@ export class Example implements ExampleClient {
     })
   }
   
-  getArticle = (req: GetArticleRequest, headers?: object, signal?: AbortSignal): Promise<GetArticleRequest> => {
+  getArticle = (req: GetArticleRequest, headers?: object, signal?: AbortSignal): Promise<GetArticleResponse> => {
     return this.fetch(
       this.url('GetArticle'),
       createHttpRequest(req, headers, signal)).then((res) => {return buildResponse(res)
