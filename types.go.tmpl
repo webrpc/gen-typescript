@@ -3,6 +3,7 @@
 {{- $typeMap := .TypeMap -}}
 {{- $types := .Types -}}
 {{- $services := .Services -}}
+{{- $opts := .Opts -}}
 
 //
 // Schema types
@@ -39,17 +40,18 @@ export interface {{$type.Name}} {
 {{- end -}}
 {{- end -}}
 
+{{/* Request/response generated types */}}
 {{- if $services}}
 {{- range $_, $service := $services}}
 {{range $_, $method := $service.Methods}}
 {{- if eq $method.Succinct false -}}
-export interface {{$method.Name}}Request {
+export interface {{$method.Name}}{{if $opts.compat}}Args{{else}}Request{{end}} {
 {{- range $_, $input := $method.Inputs}}
   {{$input.Name}}{{if $input.Optional}}?{{end}}: {{template "type" dict "Type" $input.Type "TypeMap" $typeMap}}
 {{- end}}
 }
 
-export interface {{$method.Name}}Response {
+export interface {{$method.Name}}{{if $opts.compat}}Return{{else}}Response{{end}} {
 {{- range $_, $output := $method.Outputs}}
   {{$output.Name}}{{if $output.Optional}}?{{end}}: {{template "type" dict "Type" $output.Type "TypeMap" $typeMap}}
 {{- end}}

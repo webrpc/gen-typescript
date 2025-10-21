@@ -138,6 +138,10 @@ const dispatchExampleRequest = async <Context>(service: ExampleServer<Context>, 
 
   
 
+//
+// Server type validators
+//
+
 const JS_TYPES = [
     "bigint",
     "boolean",
@@ -149,136 +153,79 @@ const JS_TYPES = [
     "undefined"
 ]
 
+const validateKind = (value: any) => {
+  if (!("USER" in value) || !validateType(value["USER"], "number")) {
+    return false
+  }
+  if (!("ADMIN" in value) || !validateType(value["ADMIN"], "number")) {
+    return false
+  }
+  return true
+}
 
-    const validateKind = (value: any) => {
-        
-            
-                if (!("USER" in value) || !validateType(value["USER"], "number")) {
-                    return false
-                }
-            
-        
-            
-                if (!("ADMIN" in value) || !validateType(value["ADMIN"], "number")) {
-                    return false
-                }
-            
-        
+const validateUser = (value: any) => {
+  if (!("id" in value) || !validateType(value["id"], "number")) {
+    return false
+  }
+  if (!("USERNAME" in value) || !validateType(value["USERNAME"], "string")) {
+    return false
+  }
+  if (!("role" in value) || !validateType(value["role"], "Kind")) {
+    return false
+  }
+  if (!("meta" in value) || !validateType(value["meta"], "object")) {
+    return false
+  }
+  if (!("-" in value) || !validateType(value["-"], "number")) {
+    return false
+  }
+  if ("createdAt" in value && !validateType(value["createdAt"], "string")) {
+    return false
+  }
+  return true
+}
 
-        return true
-    }
+const validatePage = (value: any) => {
+  if (!("num" in value) || !validateType(value["num"], "number")) {
+    return false
+  }
+  return true
+}
 
-    const validateUser = (value: any) => {
-        
-            
-                if (!("id" in value) || !validateType(value["id"], "number")) {
-                    return false
-                }
-            
-        
-            
-                if (!("USERNAME" in value) || !validateType(value["USERNAME"], "string")) {
-                    return false
-                }
-            
-        
-            
-                if (!("role" in value) || !validateType(value["role"], "Kind")) {
-                    return false
-                }
-            
-        
-            
-                if (!("meta" in value) || !validateType(value["meta"], "object")) {
-                    return false
-                }
-            
-        
-            
-                if (!("-" in value) || !validateType(value["-"], "number")) {
-                    return false
-                }
-            
-        
-            
-                if ("createdAt" in value && !validateType(value["createdAt"], "string")) {
-                    return false
-                }
-            
-        
+const validateGetArticleRequest = (value: any) => {
+  if (!("articleId" in value) || !validateType(value["articleId"], "number")) {
+    return false
+  }
+  return true
+}
 
-        return true
-    }
-
-    const validatePage = (value: any) => {
-        
-            
-                if (!("num" in value) || !validateType(value["num"], "number")) {
-                    return false
-                }
-            
-        
-
-        return true
-    }
-
-    const validateGetArticleRequest = (value: any) => {
-        
-            
-                if (!("articleId" in value) || !validateType(value["articleId"], "number")) {
-                    return false
-                }
-            
-        
-
-        return true
-    }
-
-    const validateGetArticleResponse = (value: any) => {
-        
-            
-                if (!("title" in value) || !validateType(value["title"], "string")) {
-                    return false
-                }
-            
-        
-            
-                if ("content" in value && !validateType(value["content"], "string")) {
-                    return false
-                }
-            
-        
-
-        return true
-    }
-
+const validateGetArticleResponse = (value: any) => {
+  if (!("title" in value) || !validateType(value["title"], "string")) {
+    return false
+  }
+  if ("content" in value && !validateType(value["content"], "string")) {
+    return false
+  }
+  return true
+}
 
 const TYPE_VALIDATORS: { [type: string]: (value: any) => boolean } = {
-    
-        Kind: validateKind,
-    
-        User: validateUser,
-    
-        Page: validatePage,
-    
-        GetArticleRequest: validateGetArticleRequest,
-    
-        GetArticleResponse: validateGetArticleResponse,
-    
+  Kind: validateKind,
+  User: validateUser,
+  Page: validatePage,
+  GetArticleRequest: validateGetArticleRequest,
+  GetArticleResponse: validateGetArticleResponse,
 }
 
 const validateType = (value: any, type: string) => {
-    if (JS_TYPES.indexOf(type) > -1) {
-        return typeof value === type;
-    }
-
-    const validator = TYPE_VALIDATORS[type];
-
-    if (!validator) {
-        return false;
-    }
-
-    return validator(value);
+  if (JS_TYPES.indexOf(type) > -1) {
+    return typeof value === type;
+  }
+  const validator = TYPE_VALIDATORS[type];
+  if (!validator) {
+    return false;
+  }
+  return validator(value);
 }
 
 //

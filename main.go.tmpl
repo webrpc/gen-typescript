@@ -92,13 +92,12 @@ export const WebrpcSchemaHash = "{{.SchemaHash}}"
 
 {{- "\n\n" -}}
 
-{{template "types" dict "Types" .Types "Services" .Services "TypeMap" $typeMap}}
+{{template "types" dict "Types" .Types "Services" .Services "Opts" $opts "TypeMap" $typeMap}}
 
 {{- "\n" -}}
 
 {{- if $opts.client -}}
   {{template "client" dict "Services" .Services "Opts" $opts "TypeMap" $typeMap}}
-
   {{template "clientHelpers" dict "WebrpcErrors" .WebrpcErrors "SchemaErrors" .Errors "Opts" $opts }}
 {{- end -}}
 
@@ -108,6 +107,8 @@ export const WebrpcSchemaHash = "{{.SchemaHash}}"
   {{template "server" dict "Services" .Services "Opts" $opts "TypeMap" $typeMap}}
   {{template "serverHelpers" dict "Types" .Types "TypeMap" $typeMap}}
 {{- end -}}
+
+{{- "\n\n" -}}
 
 {{template "errors" dict "Services" .Services "WebrpcErrors" .WebrpcErrors "SchemaErrors" .Errors "Opts" $opts}}
 
