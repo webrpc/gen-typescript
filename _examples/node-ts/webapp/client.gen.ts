@@ -32,7 +32,7 @@ export interface ExampleClient {
   /**
    * Get article by id.
    */
-  getArticle(req: GetArticleRequest, headers?: object, signal?: AbortSignal): Promise<GetArticleRequest>
+  getArticle(req: GetArticleRequest, headers?: object, signal?: AbortSignal): Promise<GetArticleResponse>
 }
 
 
