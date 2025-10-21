@@ -49,7 +49,7 @@ const validateType = (value: any, type: string) => {
   if (!validator) {
     return false;
   }
-  return validator(value);
+  return validator(value)
 }
 
 {{- end}}

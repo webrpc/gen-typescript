@@ -25,24 +25,24 @@ export class {{.Name}} implements {{.Name}}Client {
   {{range $_, $method := .Methods}}
   {{firstLetterToLower .Name}} = ({{template "methodInputs" dict "Method" . "Opts" $opts "TypeMap" $typeMap}}): {{if $method.StreamOutput}}WebrpcStreamController{{else}}{{if $method.Succinct}}Promise<{{(index $method.Inputs 0).Type}}>{{else}}Promise<{{$method.Name}}{{if $opts.compat}}Return{{else}}Response{{end}}>{{end}}{{end}} => {
   {{- if $method.StreamOutput }}
-    const abortController = new AbortController();
+    const abortController = new AbortController()
     const abortSignal = abortController.signal
 
     if (options.signal) {
       abortSignal.addEventListener("abort", () => abortController.abort(options.signal?.reason), {
         signal: options.signal,
-      });
+      })
     }
 
     const _fetch = () => this.fetch(this.url('{{.Name}}'),
       {{- if .Inputs | len }}createHttpRequest(req, options.headers, abortSignal){{- else}}createHttpRequest({}, options.headers, options.signal){{end }}
       ).then(async (res) => {
-        await sseResponse(res, options, _fetch);
+        await sseResponse(res, options, _fetch)
     }, (error) => {
-      options.onError(error, _fetch);
-    });
+      options.onError(error, _fetch)
+    })
 
-    const resp = _fetch();
+    const resp = _fetch()
     return {
       abort: abortController.abort.bind(abortController),
       closed: resp

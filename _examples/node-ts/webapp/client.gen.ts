@@ -495,7 +495,7 @@ type WebrpcGenVersions = {
 };
 
 export function VersionFromHeader(headers: Headers): WebrpcGenVersions {
-  const headerValue = headers.get(WebrpcHeader);
+  const headerValue = headers.get(WebrpcHeader)
   if (!headerValue) {
     return {
       WebrpcGenVersion: "",
@@ -506,11 +506,11 @@ export function VersionFromHeader(headers: Headers): WebrpcGenVersions {
     };
   }
 
-  return parseWebrpcGenVersions(headerValue);
+  return parseWebrpcGenVersions(headerValue)
 }
 
 function parseWebrpcGenVersions(header: string): WebrpcGenVersions {
-  const versions = header.split(";");
+  const versions = header.split(";")
   if (versions.length < 3) {
     return {
       WebrpcGenVersion: "",
@@ -521,9 +521,9 @@ function parseWebrpcGenVersions(header: string): WebrpcGenVersions {
     };
   }
 
-  const [_, WebrpcGenVersion] = versions[0]!.split("@");
-  const [codeGenName, codeGenVersion] = versions[1]!.split("@");
-  const [schemaName, schemaVersion] = versions[2]!.split("@");
+  const [_, WebrpcGenVersion] = versions[0]!.split("@")
+  const [codeGenName, codeGenVersion] = versions[1]!.split("@")
+  const [schemaName, schemaVersion] = versions[2]!.split("@")
 
   return {
     WebrpcGenVersion: WebrpcGenVersion ?? "",
