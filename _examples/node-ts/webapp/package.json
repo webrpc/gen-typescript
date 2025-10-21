@@ -1,7 +1,7 @@
 {
   "name": "node-ts-webapp",
   "version": "1.0.0",
-  "main": "index.js",
+  "private": true,
   "license": "MIT",
   "dependencies": {
     "parcel": "^2.12.0"
@@ -10,6 +10,6 @@
     "start": "parcel --no-cache --port 4444 index.html"
   },
   "devDependencies": {
-    "typescript": "^3.9.10"
+    "typescript": "^5.9.3"
   }
 }

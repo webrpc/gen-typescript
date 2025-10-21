@@ -8,9 +8,15 @@ importers:
 
   .:
     devDependencies:
+      '@hono/node-server':
+        specifier: ^1.13.3
+        version: 1.19.5(hono@4.10.1)
       '@types/node':
         specifier: ^24.8.1
         version: 24.8.1
+      hono:
+        specifier: ^4.4.7
+        version: 4.10.1
       tsx:
         specifier: ^4.20.6
         version: 4.20.6
@@ -176,6 +182,12 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@hono/node-server@1.19.5':
+    resolution: {integrity: sha512-iBuhh+uaaggeAuf+TftcjZyWh2GEgZcVGXkNtskLVoWaXhnJtC5HLHrU8W1KHDoucqO1MswwglmkWLFyiDn4WQ==}
+    engines: {node: '>=18.14.1'}
+    peerDependencies:
+      hono: ^4
+
   '@types/node@24.8.1':
     resolution: {integrity: sha512-alv65KGRadQVfVcG69MuB4IzdYVpRwMG/mq8KWOaoOdyY617P5ivaDiMCGOFDWD2sAn5Q0mR3mRtUOgm99hL9Q==}
 
@@ -191,6 +203,10 @@ packages:
 
   get-tsconfig@4.12.0:
     resolution: {integrity: sha512-LScr2aNr2FbjAjZh2C6X6BxRx1/x+aTDExct/xyq2XKbYOiG5c0aK7pMsSuyc0brz3ibr/lbQiHD9jzt4lccJw==}
+
+  hono@4.10.1:
+    resolution: {integrity: sha512-rpGNOfacO4WEPClfkEt1yfl8cbu10uB1lNpiI33AKoiAHwOS8lV748JiLx4b5ozO/u4qLjIvfpFsPXdY5Qjkmg==}
+    engines: {node: '>=16.9.0'}
 
   resolve-pkg-maps@1.0.0:
     resolution: {integrity: sha512-seS2Tj26TBVOC2NIc2rOe2y2ZO7efxITtLZcGSOnHHNOQ7CkiUBfw0Iw2ck6xkIhPwLhKNLS8BO+hEpngQlqzw==}
@@ -288,6 +304,10 @@ snapshots:
   '@esbuild/win32-x64@0.25.11':
     optional: true
 
+  '@hono/node-server@1.19.5(hono@4.10.1)':
+    dependencies:
+      hono: 4.10.1
+
   '@types/node@24.8.1':
     dependencies:
       undici-types: 7.14.0
@@ -327,6 +347,8 @@ snapshots:
   get-tsconfig@4.12.0:
     dependencies:
       resolve-pkg-maps: 1.0.0
+
+  hono@4.10.1: {}
 
   resolve-pkg-maps@1.0.0: {}
 
