@@ -46,6 +46,11 @@ const dispatch{{$service.Name}}Request = async <Context>(service: {{$service.Nam
   {{- range $_, $method := $service.Methods}}
     case '{{$method.Name}}':
     {{- range $_, $input := $method.Inputs }}
+      {{- if $method.Succinct }}
+      if (payload && !validateType(payload, "{{template "jsType" dict "Type" $input.Type "TypeMap" $typeMap}}")) {
+        throw new WebrpcBadRequestError({ cause: "invalid argument: {{ $input.Name }}" })
+      }
+      {{- else }}
       {{- if not $input.Optional}}
       if (!("{{ $input.Name }}" in payload)) {
         throw new WebrpcBadRequestError({ cause: "missing argument `{{ $input.Name }}`" })
@@ -55,6 +60,7 @@ const dispatch{{$service.Name}}Request = async <Context>(service: {{$service.Nam
       if ("{{ $input.Name }}" in payload && !validateType(payload["{{ $input.Name }}"], "{{template "jsType" dict "Type" $input.Type "TypeMap" $typeMap}}")) {
         throw new WebrpcBadRequestError({ cause: "invalid argument: {{ $input.Name }}" })
       }
+      {{- end}}
       {{- end}}
       return service.{{firstLetterToLower $method.Name}}(ctx, payload || {})
   {{end}}

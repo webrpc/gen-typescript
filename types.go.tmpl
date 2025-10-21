@@ -36,17 +36,13 @@ export interface {{$type.Name}} {
   {{- end}}
 }
 {{end -}}
-{{end -}}
-{{end -}}
+{{- end -}}
+{{- end -}}
 
-
-{{if $services}}
-//
-// Request/Response types
-//
-
+{{- if $services}}
 {{- range $_, $service := $services}}
 {{range $_, $method := $service.Methods}}
+{{- if eq $method.Succinct false -}}
 export interface {{$method.Name}}Request {
 {{- range $_, $input := $method.Inputs}}
   {{$input.Name}}{{if $input.Optional}}?{{end}}: {{template "type" dict "Type" $input.Type "TypeMap" $typeMap}}
@@ -59,7 +55,8 @@ export interface {{$method.Name}}Response {
 {{- end}}
 }
 {{end}}
+{{end -}}
 
-{{end}}
-{{end}}
+{{- end -}}
+{{- end -}}
 {{- end -}}
