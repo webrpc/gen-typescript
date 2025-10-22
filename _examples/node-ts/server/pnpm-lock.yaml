@@ -8,6 +8,9 @@ importers:
 
   .:
     devDependencies:
+      '@tsconfig/strictest':
+        specifier: ^2.0.6
+        version: 2.0.6
       '@types/node':
         specifier: ^24.8.1
         version: 24.8.1
@@ -176,6 +179,9 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@tsconfig/strictest@2.0.6':
+    resolution: {integrity: sha512-tPOhmDhIUcDjvpDDYyiUdssP84Eqm7n5KxJe5J3/g+s6xoDIPAf+SIn06dhw7VkhxIvLOnhDDrX7tsqMHNEhDg==}
+
   '@types/node@24.8.1':
     resolution: {integrity: sha512-alv65KGRadQVfVcG69MuB4IzdYVpRwMG/mq8KWOaoOdyY617P5ivaDiMCGOFDWD2sAn5Q0mR3mRtUOgm99hL9Q==}
 
@@ -287,6 +293,8 @@ snapshots:
 
   '@esbuild/win32-x64@0.25.11':
     optional: true
+
+  '@tsconfig/strictest@2.0.6': {}
 
   '@types/node@24.8.1':
     dependencies:
