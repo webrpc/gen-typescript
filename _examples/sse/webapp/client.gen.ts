@@ -81,6 +81,12 @@ export class Chat implements ChatClient {
     return this.hostname + this.path + name
   }
   
+  queryKey = {
+    sendMessage: (req: SendMessageRequest) => ['Chat', 'sendMessage', req] as const,
+    subscribeMessages: (req: SubscribeMessagesRequest) => ['Chat', 'subscribeMessages', req] as const,
+    subscribeUsers: () => ['Chat', 'subscribeUsers'] as const,
+  }
+  
   sendMessage = (req: SendMessageRequest, headers?: object, signal?: AbortSignal): Promise<SendMessageResponse> => {
     return this.fetch(
       this.url('SendMessage'),

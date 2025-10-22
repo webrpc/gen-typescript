@@ -102,6 +102,12 @@ export class Example implements ExampleClient {
     return this.hostname + this.path + name
   }
   
+  queryKey = {
+    ping: () => ['Example', 'ping'] as const,
+    getUser: (req: GetUserRequest) => ['Example', 'getUser', req] as const,
+    getArticle: (req: GetArticleRequest) => ['Example', 'getArticle', req] as const,
+  }
+  
   ping = (headers?: object, signal?: AbortSignal): Promise<PingResponse> => {
     return this.fetch(
       this.url('Ping'),
