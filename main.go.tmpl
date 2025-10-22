@@ -52,6 +52,7 @@
 {{- set $typeMap "uint16" "number" -}}
 {{- set $typeMap "uint32" "number" -}}
 {{- set $typeMap "uint64" "number" -}}
+{{- set $typeMap "bigint" "bigint" -}}
 {{- set $typeMap "int" "number" -}}
 {{- set $typeMap "int8" "number" -}}
 {{- set $typeMap "int16" "number" -}}
@@ -167,5 +168,7 @@ function parseWebrpcGenVersions(header: string): WebrpcGenVersions {
     schemaVersion: schemaVersion ?? "",
   };
 }
+
+{{ template "bigintHelpers" dict "Schema" .WebRPCSchema "Opts" $opts }}
 
 {{end -}}
