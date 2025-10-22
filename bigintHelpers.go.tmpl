@@ -3,6 +3,11 @@
 {{- $services := .Services -}}
 {{- $opts := .Opts -}}
 
+//
+// BigInt helpers
+//
+
+{{- if $opts.server }}
 const SERVICE_METHOD_TYPES: { [service: string]: { [method: string]: [string, string] } } = {
 {{- $svcCount := len $services -}}
 {{- $svcState := dict "i" 0 -}}
@@ -26,6 +31,7 @@ const SERVICE_METHOD_TYPES: { [service: string]: { [method: string]: [string, st
   {{- set $svcState "i" (add $i 1) -}}
 {{- end }}
 }
+{{- end }}
 
 const BIG_INT_FIELDS: { [typ: string]: (string | [string, string])[] } = {
 {{- $big := SchemaBigIntFieldsByType $schema $opts.compat }}

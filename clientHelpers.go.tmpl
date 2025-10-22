@@ -4,18 +4,12 @@
 {{- $opts := .Opts -}}
 
 {{- "\n" -}}
-const createHttpRequest = (body: object = {}, headers: object = {}, signal: AbortSignal | null = null): object => {
-  const reqHeaders: {[key: string]: string} = { ...headers, 'Content-Type': 'application/json' }
+const createHttpRequest = (body: string = '{}', headers: object = {}, signal: AbortSignal | null = null): object => {
+  const reqHeaders: { [key: string]: string } = { ...headers, 'Content-Type': 'application/json' }
   {{- if eq $opts.webrpcHeader true }}
   reqHeaders[WebrpcHeader] = WebrpcHeaderValue
   {{- end }}
-
-  return {
-    method: 'POST',
-    headers: reqHeaders,
-    body: JSON.stringify(body || {}),
-    signal
-  }
+  return { method: 'POST', headers: reqHeaders, body, signal }
 }
 
 const buildResponse = (res: Response): Promise<any> => {
