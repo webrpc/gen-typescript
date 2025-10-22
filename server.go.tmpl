@@ -12,7 +12,7 @@ export const serve{{$service.Name}}Rpc = async <Context>(service: {{$service.Nam
   if (!urlPath.startsWith('/rpc/')) return null
   const parts = urlPath.split('/').filter(Boolean)
   if (parts.length !== 3 || parts[0] !== 'rpc' || parts[1] !== '{{$service.Name}}') return null
-  const method = parts[2]
+  const method = parts[2]!
   try {
     const result = await dispatch{{$service.Name}}Request(service, ctx, method, body)
     return {
