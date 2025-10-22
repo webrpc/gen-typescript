@@ -46,6 +46,7 @@ const BIG_INT_FIELDS: { [typ: string]: (string | [string, string])[] } = {
 function encodeType(typ: string, obj: any): any {
   if (obj == null || typeof obj !== 'object') return obj
   const descs = BIG_INT_FIELDS[typ] || []
+  if (!descs.length) return obj
   for (const d of descs) {
     if (Array.isArray(d)) {
       const [fieldName, nestedType] = d
@@ -79,6 +80,7 @@ function encodeType(typ: string, obj: any): any {
 function decodeType(typ: string, obj: any): any {
   if (obj == null || typeof obj !== 'object') return obj
   const descs = BIG_INT_FIELDS[typ] || []
+  if (!descs.length) return obj
   for (const d of descs) {
     if (Array.isArray(d)) {
       const [fieldName, nestedType] = d
@@ -115,12 +117,12 @@ function decodeType(typ: string, obj: any): any {
 }
 
 // Encode object of given root type to JSON with BigInts converted to decimal strings.
-const JsonEncode = <T = any>(typ: string, obj: T): string => {
+export const JsonEncode = <T = any>(typ: string, obj: T): string => {
   return JSON.stringify(encodeType(typ, obj))
 }
 
 // Decode data (JSON string or already-parsed object) and convert declared BigInt string fields back to BigInt.
-const JsonDecode = <T = any>(typ: string, data: string | any): T => {
+export const JsonDecode = <T = any>(typ: string, data: string | any): T => {
   let parsed: any = data
   if (typeof data === 'string') {
     try { parsed = JSON.parse(data) } catch (err) {
