@@ -27,7 +27,7 @@ import { Example } from './client.gen'
 
 const client = new Example('http://localhost:3000', fetch)
 
-function UserProfile({ userId }: { userId: number }) {
+function UserProfile({ userId }) {
   const { data } = useQuery({
     queryKey: client.queryKey.getUser({ userId }),
     queryFn: ({ signal }) => client.getUser({ userId }, undefined, signal)
