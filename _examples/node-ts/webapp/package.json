@@ -2,6 +2,7 @@
   "name": "node-ts-webapp",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "license": "MIT",
   "dependencies": {
     "parcel": "^2.12.0"
