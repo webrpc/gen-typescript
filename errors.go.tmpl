@@ -9,11 +9,8 @@
 type WebrpcErrorParams = { name?: string, code?: number, message?: string, status?: number, cause?: string }
 
 export class WebrpcError extends Error {
-  name: string
   code: number
-  message: string
   status: number
-  cause?: string
 
   constructor(error: WebrpcErrorParams = {}) {
     super(error.message)
@@ -21,7 +18,9 @@ export class WebrpcError extends Error {
     this.code = typeof error.code === 'number' ? error.code : 0
     this.message = error.message || `endpoint error`
     this.status = typeof error.status === 'number' ? error.status : 400
-    this.cause = error.cause
+    if (error.cause !== undefined) {
+      this.cause = error.cause
+    }
     Object.setPrototypeOf(this, WebrpcError.prototype)
   }
 
@@ -38,7 +37,9 @@ export class {{$error.Name}}Error extends WebrpcError {
     this.code = typeof error.code === 'number' ? error.code : {{$error.Code}}
     this.message = error.message || `{{$error.Message}}`
     this.status = typeof error.status === 'number' ? error.status : {{$error.HTTPStatus}}
-    this.cause = error.cause
+    if (error.cause !== undefined) {
+      this.cause = error.cause
+    }
     Object.setPrototypeOf(this, {{$error.Name}}Error.prototype)
   }
 }
@@ -55,7 +56,9 @@ export class {{$error.Name}}Error extends WebrpcError {
     this.code = typeof error.code === 'number' ? error.code : {{$error.Code}}
     this.message = error.message || `{{$error.Message}}`
     this.status = typeof error.status === 'number' ? error.status : {{$error.HTTPStatus}}
-    this.cause = error.cause
+    if (error.cause !== undefined) {
+      this.cause = error.cause
+    }
     Object.setPrototypeOf(this, {{$error.Name}}Error.prototype)
   }
 }
