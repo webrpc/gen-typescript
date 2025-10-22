@@ -15,6 +15,30 @@ write by hand.
 
 2. Server -- a nodejs Typescript server handler. See examples.
 
+## Features
+
+### Query Keys for React Query / SWR / RTK Query
+
+The generated client includes a `queryKey` property with type-safe query key generators for each endpoint. This makes it easy to use with popular data-fetching libraries:
+
+```typescript
+import { useQuery } from '@tanstack/react-query'
+import { Example } from './client.gen'
+
+const client = new Example('http://localhost:3000', fetch)
+
+function UserProfile({ userId }: { userId: number }) {
+  const { data } = useQuery({
+    queryKey: client.queryKey.getUser({ userId }),
+    queryFn: ({ signal }) => client.getUser({ userId }, undefined, signal)
+  })
+  
+  return <div>{data?.user.name}</div>
+}
+```
+
+The query keys follow the pattern `[ServiceName, methodName, request?]` and are fully type-safe with `as const` assertions.
+
 ## Usage
 
 ```

@@ -8,11 +8,11 @@
 // Client
 //
 
-{{- "\n" -}}{{- range .Services}}
-export class {{.Name}} implements {{.Name}}Client {
+{{- "\n" -}}{{- range $serviceIndex, $service := .Services}}
+export class {{$service.Name}} implements {{$service.Name}}Client {
   protected hostname: string
   protected fetch: Fetch
-  protected path = '/rpc/{{.Name}}/'
+  protected path = '/rpc/{{$service.Name}}/'
 
   constructor(hostname: string, fetch: Fetch) {
     this.hostname = hostname.replace(/\/*$/, '')
@@ -22,7 +22,13 @@ export class {{.Name}} implements {{.Name}}Client {
   private url(name: string): string {
     return this.hostname + this.path + name
   }
-  {{range $_, $method := .Methods}}
+  
+  queryKey = {
+  {{- range $i, $method := $service.Methods}}
+    {{firstLetterToLower .Name}}: ({{if .Inputs | len}}req: {{.Name}}{{if $opts.compat}}Args{{else}}Request{{end}}{{end}}) => ['{{$service.Name}}', '{{firstLetterToLower .Name}}'{{if .Inputs | len}}, req{{end}}] as const,
+  {{- end}}
+  }
+  {{range $_, $method := $service.Methods}}
   {{firstLetterToLower .Name}} = ({{template "methodInputs" dict "Method" . "Opts" $opts "TypeMap" $typeMap}}): {{if $method.StreamOutput}}WebrpcStreamController{{else}}{{if $method.Succinct}}Promise<{{(index $method.Outputs 0).Type}}>{{else}}Promise<{{$method.Name}}{{if $opts.compat}}Return{{else}}Response{{end}}>{{end}}{{end}} => {
   {{- if $method.StreamOutput }}
     const abortController = new AbortController()
