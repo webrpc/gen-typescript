@@ -2,6 +2,7 @@
   "name": "node-ts-server",
   "version": "1.0.0",
   "description": "",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "start": "tsx index.ts"
@@ -11,6 +12,7 @@
   "license": "ISC",
   "packageManager": "pnpm@10.17.1",
   "devDependencies": {
+    "@tsconfig/strictest": "^2.0.6",
     "@types/node": "^24.8.1",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3"

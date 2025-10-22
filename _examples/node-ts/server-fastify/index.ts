@@ -110,7 +110,7 @@ app.get('/json', async (req, reply) => {
 })
 
 // Fallback 404 handler for all unmatched routes
-app.setNotFoundHandler((req, reply) => {
+app.setNotFoundHandler((_req, reply) => {
   reply.code(404).send({ msg: 'not found' })
 })
 
