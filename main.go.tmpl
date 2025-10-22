@@ -111,6 +111,10 @@ export const WebrpcSchemaHash = "{{.SchemaHash}}"
 
 {{- "\n\n" -}}
 
+{{ template "bigintHelpers" dict "Schema" .WebRPCSchema "Services" .Services "Opts" $opts }}
+
+{{- "\n\n" -}}
+
 {{template "errors" dict "Services" .Services "WebrpcErrors" .WebrpcErrors "SchemaErrors" .Errors "Opts" $opts}}
 
 //
@@ -168,7 +172,5 @@ function parseWebrpcGenVersions(header: string): WebrpcGenVersions {
     schemaVersion: schemaVersion ?? "",
   };
 }
-
-{{ template "bigintHelpers" dict "Schema" .WebRPCSchema "Services" .Services "Opts" $opts }}
 
 {{end -}}
