@@ -1,18 +1,34 @@
 {{define "bigintHelpers"}}
 {{- $schema := .Schema -}}
+{{- $services := .Services -}}
 {{- $opts := .Opts -}}
 
-// TODOXXX NOTE: this can be generated from the tempalte itself.. no need for a helper ..
 const SERVICE_METHOD_TYPES: { [service: string]: { [method: string]: [string, string] } } = {
-  'Example': {
-    GetUser: ['GetUserRequest', 'GetUserResponse'],
-    GetArticle: ['GetArticleRequest', 'GetArticleResponse'],
-    Ping: ['PingRequest', 'PingResponse']
-  }
+{{- $svcCount := len $services -}}
+{{- $svcState := dict "i" 0 -}}
+{{- range $_, $service := $services }}
+  {{$service.Name}}: {
+    {{- $mCount := len $service.Methods -}}
+    {{- range $mi, $method := $service.Methods }}
+    {{$method.Name}}: [
+      {{- if $method.Succinct -}}
+        '{{ (index $method.Inputs 0).Type }}', '{{ (index $method.Outputs 0).Type }}'
+      {{- else -}}
+        {{- if $opts.compat -}}
+          '{{$method.Name}}Args', '{{$method.Name}}Return'
+        {{- else -}}
+          '{{$method.Name}}Request', '{{$method.Name}}Response'
+        {{- end -}}
+      {{- end -}}
+    ]{{ if lt (add $mi 1) $mCount }},{{ end }}
+    {{- end }}
+  }{{ $i := index $svcState "i" }}{{ if lt (add $i 1) $svcCount }},{{ end }}
+  {{- set $svcState "i" (add $i 1) -}}
+{{- end }}
 }
 
 const BIG_INT_FIELDS: { [typ: string]: (string | [string, string])[] } = {
-{{- $big := SchemaBigIntFieldsByType $schema }}
+{{- $big := SchemaBigIntFieldsByType $schema $opts.compat }}
 {{- $n := len $big -}}
 {{- $state := dict "i" 0 -}}
 {{- range $typeName, $entries := $big }}

@@ -169,6 +169,6 @@ function parseWebrpcGenVersions(header: string): WebrpcGenVersions {
   };
 }
 
-{{ template "bigintHelpers" dict "Schema" .WebRPCSchema "Opts" $opts }}
+{{ template "bigintHelpers" dict "Schema" .WebRPCSchema "Services" .Services "Opts" $opts }}
 
 {{end -}}
