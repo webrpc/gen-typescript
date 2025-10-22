@@ -340,9 +340,7 @@ export class WebrpcError extends Error {
     this.code = typeof error.code === 'number' ? error.code : 0
     this.message = error.message || `endpoint error`
     this.status = typeof error.status === 'number' ? error.status : 400
-    if (error.cause !== undefined) {
-      this.cause = error.cause
-    }
+    if (error.cause !== undefined) this.cause = error.cause
     Object.setPrototypeOf(this, WebrpcError.prototype)
   }
 
@@ -359,9 +357,7 @@ export class WebrpcEndpointError extends WebrpcError {
     this.code = typeof error.code === 'number' ? error.code : 0
     this.message = error.message || `endpoint error`
     this.status = typeof error.status === 'number' ? error.status : 400
-    if (error.cause !== undefined) {
-      this.cause = error.cause
-    }
+    if (error.cause !== undefined) this.cause = error.cause
     Object.setPrototypeOf(this, WebrpcEndpointError.prototype)
   }
 }
@@ -373,9 +369,7 @@ export class WebrpcRequestFailedError extends WebrpcError {
     this.code = typeof error.code === 'number' ? error.code : -1
     this.message = error.message || `request failed`
     this.status = typeof error.status === 'number' ? error.status : 400
-    if (error.cause !== undefined) {
-      this.cause = error.cause
-    }
+    if (error.cause !== undefined) this.cause = error.cause
     Object.setPrototypeOf(this, WebrpcRequestFailedError.prototype)
   }
 }
@@ -387,9 +381,7 @@ export class WebrpcBadRouteError extends WebrpcError {
     this.code = typeof error.code === 'number' ? error.code : -2
     this.message = error.message || `bad route`
     this.status = typeof error.status === 'number' ? error.status : 404
-    if (error.cause !== undefined) {
-      this.cause = error.cause
-    }
+    if (error.cause !== undefined) this.cause = error.cause
     Object.setPrototypeOf(this, WebrpcBadRouteError.prototype)
   }
 }
@@ -401,9 +393,7 @@ export class WebrpcBadMethodError extends WebrpcError {
     this.code = typeof error.code === 'number' ? error.code : -3
     this.message = error.message || `bad method`
     this.status = typeof error.status === 'number' ? error.status : 405
-    if (error.cause !== undefined) {
-      this.cause = error.cause
-    }
+    if (error.cause !== undefined) this.cause = error.cause
     Object.setPrototypeOf(this, WebrpcBadMethodError.prototype)
   }
 }
@@ -415,9 +405,7 @@ export class WebrpcBadRequestError extends WebrpcError {
     this.code = typeof error.code === 'number' ? error.code : -4
     this.message = error.message || `bad request`
     this.status = typeof error.status === 'number' ? error.status : 400
-    if (error.cause !== undefined) {
-      this.cause = error.cause
-    }
+    if (error.cause !== undefined) this.cause = error.cause
     Object.setPrototypeOf(this, WebrpcBadRequestError.prototype)
   }
 }
@@ -429,9 +417,7 @@ export class WebrpcBadResponseError extends WebrpcError {
     this.code = typeof error.code === 'number' ? error.code : -5
     this.message = error.message || `bad response`
     this.status = typeof error.status === 'number' ? error.status : 500
-    if (error.cause !== undefined) {
-      this.cause = error.cause
-    }
+    if (error.cause !== undefined) this.cause = error.cause
     Object.setPrototypeOf(this, WebrpcBadResponseError.prototype)
   }
 }
@@ -443,9 +429,7 @@ export class WebrpcServerPanicError extends WebrpcError {
     this.code = typeof error.code === 'number' ? error.code : -6
     this.message = error.message || `server panic`
     this.status = typeof error.status === 'number' ? error.status : 500
-    if (error.cause !== undefined) {
-      this.cause = error.cause
-    }
+    if (error.cause !== undefined) this.cause = error.cause
     Object.setPrototypeOf(this, WebrpcServerPanicError.prototype)
   }
 }
@@ -457,9 +441,7 @@ export class WebrpcInternalErrorError extends WebrpcError {
     this.code = typeof error.code === 'number' ? error.code : -7
     this.message = error.message || `internal error`
     this.status = typeof error.status === 'number' ? error.status : 500
-    if (error.cause !== undefined) {
-      this.cause = error.cause
-    }
+    if (error.cause !== undefined) this.cause = error.cause
     Object.setPrototypeOf(this, WebrpcInternalErrorError.prototype)
   }
 }
@@ -471,9 +453,7 @@ export class WebrpcClientAbortedError extends WebrpcError {
     this.code = typeof error.code === 'number' ? error.code : -8
     this.message = error.message || `request aborted by client`
     this.status = typeof error.status === 'number' ? error.status : 400
-    if (error.cause !== undefined) {
-      this.cause = error.cause
-    }
+    if (error.cause !== undefined) this.cause = error.cause
     Object.setPrototypeOf(this, WebrpcClientAbortedError.prototype)
   }
 }
@@ -485,9 +465,7 @@ export class WebrpcStreamLostError extends WebrpcError {
     this.code = typeof error.code === 'number' ? error.code : -9
     this.message = error.message || `stream lost`
     this.status = typeof error.status === 'number' ? error.status : 400
-    if (error.cause !== undefined) {
-      this.cause = error.cause
-    }
+    if (error.cause !== undefined) this.cause = error.cause
     Object.setPrototypeOf(this, WebrpcStreamLostError.prototype)
   }
 }
@@ -499,9 +477,7 @@ export class WebrpcStreamFinishedError extends WebrpcError {
     this.code = typeof error.code === 'number' ? error.code : -10
     this.message = error.message || `stream finished`
     this.status = typeof error.status === 'number' ? error.status : 200
-    if (error.cause !== undefined) {
-      this.cause = error.cause
-    }
+    if (error.cause !== undefined) this.cause = error.cause
     Object.setPrototypeOf(this, WebrpcStreamFinishedError.prototype)
   }
 }
@@ -518,9 +494,7 @@ export class EmptyUsernameError extends WebrpcError {
     this.code = typeof error.code === 'number' ? error.code : 100
     this.message = error.message || `Username must be provided.`
     this.status = typeof error.status === 'number' ? error.status : 400
-    if (error.cause !== undefined) {
-      this.cause = error.cause
-    }
+    if (error.cause !== undefined) this.cause = error.cause
     Object.setPrototypeOf(this, EmptyUsernameError.prototype)
   }
 }
