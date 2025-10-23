@@ -1,8 +1,10 @@
-{{define "bigintHelpers"}}
+{{- define "bigintHelpers" -}}
 {{- $schema := .Schema -}}
 {{- $services := .Services -}}
 {{- $opts := .Opts -}}
+{{- $usesBigInts := .UsesBigInts -}}
 
+{{- if $usesBigInts}}
 //
 // BigInt helpers
 //
@@ -123,12 +125,12 @@ function decodeType(typ: string, obj: any): any {
 }
 
 // Encode object of given root type to JSON with BigInts converted to decimal strings.
-export const JsonEncode = <T = any>(typ: string, obj: T): string => {
+export const JsonEncode = <T = any>(obj: T, typ: string = ''): string => {
   return JSON.stringify(encodeType(typ, obj))
 }
 
 // Decode data (JSON string or already-parsed object) and convert declared BigInt string fields back to BigInt.
-export const JsonDecode = <T = any>(typ: string, data: string | any): T => {
+export const JsonDecode = <T = any>(data: string | any, typ: string = ''): T => {
   let parsed: any = data
   if (typeof data === 'string') {
     try { parsed = JSON.parse(data) } catch (err) {
@@ -137,5 +139,19 @@ export const JsonDecode = <T = any>(typ: string, data: string | any): T => {
   }
   return decodeType(typ, parsed) as T
 }
+{{- else}}
+{{- "\n\n" -}}export const JsonEncode = <T = any>(obj: T, _typ: string = ''): string => {
+  return JSON.stringify(obj)
+}
 
+export const JsonDecode = <T = any>(data: string | any, _typ: string = ''): T => {
+  let parsed: any = data
+  if (typeof data === 'string') {
+    try { parsed = JSON.parse(data) } catch (err) {
+      throw WebrpcBadResponseError.new({ cause: `JsonDecode: JSON.parse failed: ${(err as Error).message}` })
+    }
+  }
+  return parsed as T
+}
+{{- end }}
 {{end -}}

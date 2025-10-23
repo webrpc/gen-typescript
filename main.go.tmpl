@@ -63,6 +63,8 @@
 {{- set $typeMap "string" "string" -}}
 {{- set $typeMap "timestamp" "string" -}}
 
+{{- $usesBigInts := SchemaBigIntFieldsByType .WebRPCSchema -}}
+
 /* eslint-disable */
 // {{.SchemaName}} {{.SchemaVersion}} {{.SchemaHash}}
 // --
@@ -105,13 +107,13 @@ export const WebrpcSchemaHash = "{{.SchemaHash}}"
 {{- "\n" -}}
 
 {{- if $opts.server -}}
-{{template "server" dict "Services" .Services "Opts" $opts "TypeMap" $typeMap}}
+{{template "server" dict "Services" .Services "Opts" $opts "TypeMap" $typeMap "UsesBigInts" $usesBigInts}}
 {{template "serverHelpers" dict "Types" .Types "TypeMap" $typeMap}}
 {{- end -}}
 
-{{- "\n\n" -}}
+{{- "\n" -}}
 
-{{ template "bigintHelpers" dict "Schema" .WebRPCSchema "Services" .Services "Opts" $opts }}
+{{ template "bigintHelpers" dict "Schema" .WebRPCSchema "Services" .Services "Opts" $opts "UsesBigInts" $usesBigInts }}
 
 {{- "\n\n" -}}
 

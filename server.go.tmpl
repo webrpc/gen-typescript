@@ -1,7 +1,8 @@
-{{define "server"}}
+{{- define "server" -}}
 
 {{- $services := .Services -}}
 {{- $typeMap := .TypeMap -}}
+{{- $usesBigInts := .UsesBigInts -}}
 
 {{- if $services}}
 //
@@ -42,13 +43,16 @@ export const serve{{$service.Name}}Rpc = async <Context>(service: {{$service.Nam
 }
 
 const dispatch{{$service.Name}}Request = async <Context>(service: {{$service.Name}}Server<Context>, ctx: Context, method: string, body: any) => {
+  {{- if $usesBigInts}}
   const methodTypes = SERVICE_METHOD_TYPES['{{$service.Name}}'][method]
   if (!methodTypes) {
     throw new WebrpcBadRouteError({ cause: 'method not found' })
   }
   const [reqType, respType] = methodTypes
-  const payload = reqType ? JsonDecode(reqType, body) : body
-
+  const payload = reqType ? JsonDecode(body, reqType) : body
+  {{- else}}
+  let payload: any = body
+  {{- end}}
   let result: any
   switch (method) {
   {{- range $_, $method := $service.Methods}}
@@ -76,7 +80,11 @@ const dispatch{{$service.Name}}Request = async <Context>(service: {{$service.Nam
       throw new WebrpcBadRouteError({ cause: 'method not found' })
   }
 
+  {{- if $usesBigInts}}
   return respType ? encodeType(respType, result) : result
+  {{- else}}
+  return result
+  {{- end}}
 }
 
 {{- end}}
