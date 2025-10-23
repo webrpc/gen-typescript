@@ -52,6 +52,7 @@
 {{- set $typeMap "uint16" "number" -}}
 {{- set $typeMap "uint32" "number" -}}
 {{- set $typeMap "uint64" "number" -}}
+{{- set $typeMap "bigint" "bigint" -}}
 {{- set $typeMap "int" "number" -}}
 {{- set $typeMap "int8" "number" -}}
 {{- set $typeMap "int16" "number" -}}
@@ -61,6 +62,8 @@
 {{- set $typeMap "float64" "number" -}}
 {{- set $typeMap "string" "string" -}}
 {{- set $typeMap "timestamp" "string" -}}
+
+{{- $usesBigInts := SchemaBigIntFieldsByType .WebRPCSchema -}}
 
 /* eslint-disable */
 // {{.SchemaName}} {{.SchemaVersion}} {{.SchemaHash}}
@@ -104,9 +107,13 @@ export const WebrpcSchemaHash = "{{.SchemaHash}}"
 {{- "\n" -}}
 
 {{- if $opts.server -}}
-{{template "server" dict "Services" .Services "Opts" $opts "TypeMap" $typeMap}}
+{{template "server" dict "Services" .Services "Opts" $opts "TypeMap" $typeMap "UsesBigInts" $usesBigInts}}
 {{template "serverHelpers" dict "Types" .Types "TypeMap" $typeMap}}
 {{- end -}}
+
+{{- "\n" -}}
+
+{{ template "bigintHelpers" dict "Schema" .WebRPCSchema "Services" .Services "Opts" $opts "UsesBigInts" $usesBigInts }}
 
 {{- "\n\n" -}}
 

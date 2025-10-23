@@ -1,4 +1,4 @@
-{{define "client"}}
+{{- define "client" -}}
 
 {{- $typeMap := .TypeMap -}}
 {{- $opts := .Opts -}}
@@ -28,7 +28,22 @@ export class {{$service.Name}} implements {{$service.Name}}Client {
     {{firstLetterToLower .Name}}: ({{if .Inputs | len}}req: {{.Name}}{{if $opts.compat}}Args{{else}}Request{{end}}{{end}}) => ['{{$service.Name}}', '{{firstLetterToLower .Name}}'{{if .Inputs | len}}, req{{end}}] as const,
   {{- end}}
   }
-  {{range $_, $method := $service.Methods}}
+
+  {{- "\n" -}}{{- range $_, $method := $service.Methods}}
+  {{- $methodReqName := "" -}}
+  {{- $methodRespName := "" -}}
+  {{- if $method.Succinct -}}
+    {{- $methodReqName = (index $method.Inputs 0).Type -}}
+    {{- $methodRespName = (index $method.Outputs 0).Type -}}
+  {{- else -}}
+    {{- if $opts.compat -}}
+      {{- $methodReqName = printf "%sArgs" $method.Name -}}
+      {{- $methodRespName = printf "%sReturn" $method.Name -}}
+    {{- else -}}
+      {{- $methodReqName = printf "%sRequest" $method.Name -}}
+      {{- $methodRespName = printf "%sResponse" $method.Name -}}
+    {{- end -}}
+  {{- end}}
   {{firstLetterToLower .Name}} = ({{template "methodInputs" dict "Method" . "Opts" $opts "TypeMap" $typeMap}}): {{if $method.StreamOutput}}WebrpcStreamController{{else}}{{if $method.Succinct}}Promise<{{(index $method.Outputs 0).Type}}>{{else}}Promise<{{$method.Name}}{{if $opts.compat}}Return{{else}}Response{{end}}>{{end}}{{end}} => {
   {{- if $method.StreamOutput }}
     const abortController = new AbortController()
@@ -41,9 +56,9 @@ export class {{$service.Name}} implements {{$service.Name}}Client {
     }
 
     const _fetch = () => this.fetch(this.url('{{.Name}}'),
-      {{- if .Inputs | len }}createHttpRequest(req, options.headers, abortSignal){{- else}}createHttpRequest({}, options.headers, options.signal){{end }}
-      ).then(async (res) => {
-        await sseResponse(res, options, _fetch)
+      {{if .Inputs | len }}createHttpRequest(JsonEncode(req, '{{$methodReqName}}'), options.headers, abortSignal){{- else}}createHttpRequest('{}', options.headers, options.signal){{end }}
+    ).then(async (res) => {
+      await sseResponse(res, options, _fetch)
     }, (error) => {
       options.onError(error, _fetch)
     })
@@ -52,32 +67,25 @@ export class {{$service.Name}} implements {{$service.Name}}Client {
     return {
       abort: abortController.abort.bind(abortController),
       closed: resp
-    };
+    }
   }
   {{- else }}
     return this.fetch(
       this.url('{{.Name}}'),
-      {{ if .Inputs | len }}createHttpRequest(req, headers, signal)).then((res) => { {{- else }}createHttpRequest({}, headers, signal)
-      ).then((res) => { {{- end }}
-      {{- if eq $method.Succinct false}}
-      return buildResponse(res).then(_data => {
-        {{ if .Outputs | len -}}
-        return {
-        {{- range $i, $output := .Outputs }}
-          {{$output.Name}}: <{{template "type" dict "Type" $output.Type "TypeMap" $typeMap}}>(_data.{{$output.Name}}),
-        {{- end }}
-        }
-        {{- else }}return {}{{- end }}
-      })
-      {{- else -}}
-      return buildResponse(res)
+      {{- if .Inputs | len }}
+      createHttpRequest(JsonEncode(req, '{{$methodReqName}}'), headers, signal)).then((res) => {
+      {{- else }}
+      createHttpRequest('{}', headers, signal)).then((res) => {
       {{- end }}
+      return buildResponse(res).then(_data => {
+        return JsonDecode<{{$methodRespName}}>(_data, '{{$methodRespName}}')
+      })
     }, (error) => {
       throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
     })
   }
-  {{end -}}
-  {{end}}
+{{end -}}
+{{end}}
 }
 {{- end -}}
 {{end -}}

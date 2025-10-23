@@ -1,7 +1,8 @@
-{{define "server"}}
+{{- define "server" -}}
 
 {{- $services := .Services -}}
 {{- $typeMap := .TypeMap -}}
+{{- $usesBigInts := .UsesBigInts -}}
 
 {{- if $services}}
 //
@@ -41,7 +42,18 @@ export const serve{{$service.Name}}Rpc = async <Context>(service: {{$service.Nam
   }
 }
 
-const dispatch{{$service.Name}}Request = async <Context>(service: {{$service.Name}}Server<Context>, ctx: Context, method: string, payload: any) => {
+const dispatch{{$service.Name}}Request = async <Context>(service: {{$service.Name}}Server<Context>, ctx: Context, method: string, body: any) => {
+  {{- if $usesBigInts}}
+  const methodTypes = SERVICE_METHOD_TYPES['{{$service.Name}}'][method]
+  if (!methodTypes) {
+    throw new WebrpcBadRouteError({ cause: 'method not found' })
+  }
+  const [reqType, respType] = methodTypes
+  const payload = reqType ? JsonDecode(body, reqType) : body
+  {{- else}}
+  let payload: any = body
+  {{- end}}
+  let result: any
   switch (method) {
   {{- range $_, $method := $service.Methods}}
     case '{{$method.Name}}':
@@ -55,18 +67,24 @@ const dispatch{{$service.Name}}Request = async <Context>(service: {{$service.Nam
       if (!("{{ $input.Name }}" in payload)) {
         throw new WebrpcBadRequestError({ cause: "missing argument `{{ $input.Name }}`" })
       }
-      {{end -}}
-
+      {{end}}
       if ("{{ $input.Name }}" in payload && !validateType(payload["{{ $input.Name }}"], "{{template "jsType" dict "Type" $input.Type "TypeMap" $typeMap}}")) {
         throw new WebrpcBadRequestError({ cause: "invalid argument: {{ $input.Name }}" })
       }
       {{- end}}
       {{- end}}
-      return service.{{firstLetterToLower $method.Name}}(ctx, payload || {})
+      result = await service.{{firstLetterToLower $method.Name}}(ctx, payload || {})
+      break
   {{end}}
     default:
       throw new WebrpcBadRouteError({ cause: 'method not found' })
   }
+
+  {{- if $usesBigInts}}
+  return respType ? encodeType(respType, result) : result
+  {{- else}}
+  return result
+  {{- end}}
 }
 
 {{- end}}
