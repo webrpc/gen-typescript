@@ -68,6 +68,8 @@ Change any of the following values by passing `-option="Value"` CLI flag to `web
 | `-server`          | generate server code | unset (`false`)                                   | v0.0.1  |
 | `-webrpcHeader`    | `true`               | enable client send webrpc version in http headers | v0.15.0 |
 
+**Note:** Generated code requires ES2022+ runtime environment.
+
 ## LICENSE
 
 [MIT LICENSE](./LICENSE)
