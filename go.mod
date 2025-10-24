@@ -1,3 +1,3 @@
 module github.com/webrpc/gen-typescript
 
-go 1.16
+go 1.22

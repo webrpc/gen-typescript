@@ -8,10 +8,10 @@ const sseResponse = async (
 
     if (!res.ok) {
         try {
-            await buildResponse(res);
+            await buildResponse(res)
         } catch (error) {
             // @ts-ignore
-            onError(error, retryFetch);
+            onError(error, retryFetch)
         }
         return;
     }
@@ -23,16 +23,16 @@ const sseResponse = async (
                 cause: "Invalid response, missing body",
             }),
             retryFetch
-        );
+        )
         return;
     }
 
-    onOpen && onOpen();
+    onOpen && onOpen()
 
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
+    const reader = res.body.getReader()
+    const decoder = new TextDecoder()
     let buffer = "";
-    let lastReadTime = Date.now();
+    let lastReadTime = Date.now()
     const timeout = (10 + 1) * 1000;
     let timeoutError = false
     const intervalId = setInterval(() => {
@@ -41,16 +41,16 @@ const sseResponse = async (
           clearInterval(intervalId)
           reader.releaseLock()
         }
-    }, timeout);
+    }, timeout)
 
     while (true) {
         let value;
         let done;
         try {
-            ({value, done} = await reader.read());
+            ({value, done} = await reader.read())
             if (timeoutError) throw new Error("Timeout, no data or heartbeat received")
-            lastReadTime = Date.now();
-            buffer += decoder.decode(value, {stream: true});
+            lastReadTime = Date.now()
+            buffer += decoder.decode(value, {stream: true})
         } catch (error) {
             if (error instanceof DOMException && error.name === "AbortError") {
                 onError(
@@ -59,21 +59,21 @@ const sseResponse = async (
                         cause: `AbortError: ${error instanceof Error ? error.message : String(error)}`,
                     }),
                     () => {
-                        throw new Error("Abort signal cannot be used to reconnect");
+                        throw new Error("Abort signal cannot be used to reconnect")
                     }
-                );
+                )
             } else {
                 onError(
                     WebrpcStreamLostError.new({
                         cause: `reader.read(): ${error instanceof Error ? error.message : String(error)}`,
                     }),
                     retryFetch
-                );
+                )
             }
             return;
         }
 
-        let lines = buffer.split("\n");
+        let lines = buffer.split("\n")
         for (let i = 0; i < lines.length - 1; i++) {
             const line = lines[i];
             if (line?.length === 0) {
@@ -81,7 +81,7 @@ const sseResponse = async (
             }
             let data: any;
             try {
-                data = JSON.parse(line);
+                data = JSON.parse(line)
                 if (data.hasOwnProperty("webrpcError")) {
                     const error = data.webrpcError;
                     const code: number =
@@ -89,7 +89,7 @@ const sseResponse = async (
                     onError(
                         (webrpcErrorByCode[code] || WebrpcError).new(error),
                         retryFetch
-                    );
+                    )
                     return;
                 }
             } catch (error) {
@@ -105,9 +105,9 @@ const sseResponse = async (
                         cause: `JSON.parse(): ${error instanceof Error ? error.message : String(error)}`,
                     }),
                     retryFetch
-                );
+                )
             }
-            onMessage(data);
+            onMessage(data)
         }
 
         if (!done) {
@@ -116,7 +116,7 @@ const sseResponse = async (
             continue;
         }
 
-        onClose && onClose();
+        onClose && onClose()
         return;
     }
 };
