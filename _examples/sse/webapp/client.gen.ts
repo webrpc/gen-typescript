@@ -80,8 +80,8 @@ export interface Message {
 
 export interface Chat {
   sendMessage(args: SendMessageArgs, headers?: object, signal?: AbortSignal): Promise<SendMessageReturn>
-  subscribeMessages(args: SubscribeMessagesArgs, options: WebrpcStreamOptions<SubscribeMessagesReturn>): WebrpcStreamController
-  subscribeUsers(options: WebrpcStreamOptions<SubscribeUsersReturn>): WebrpcStreamController
+  subscribeMessages(args: SubscribeMessagesArgs, options: WebrpcStreamOptions<SubscribeMessagesReturn, SubscribeMessagesArgs>): WebrpcStreamController
+  subscribeUsers(options: WebrpcStreamOptions<SubscribeUsersReturn, SubscribeUsersArgs>): WebrpcStreamController
 }
 
 export interface SendMessageArgs {
@@ -136,7 +136,7 @@ export class Chat implements Chat {
     })
   }
   
-  subscribeMessages = (args: SubscribeMessagesArgs, options: WebrpcStreamOptions<SubscribeMessagesReturn>): WebrpcStreamController => {
+  subscribeMessages = (args: SubscribeMessagesArgs, options: WebrpcStreamOptions<SubscribeMessagesReturn, SubscribeMessagesArgs>): WebrpcStreamController => {
     const abortController = new AbortController();
     const abortSignal = abortController.signal
 
@@ -146,12 +146,15 @@ export class Chat implements Chat {
       });
     }
 
-    const _fetch = () => this.fetch(this.url('SubscribeMessages'),createHTTPRequest(args, options.headers, abortSignal)
-      ).then(async (res) => {
-        await sseResponse(res, options, _fetch);
-    }, (error) => {
-      options.onError(error, _fetch);
-    });
+    const _fetch = (reconnectArgs?: SubscribeMessagesArgs) => {
+      const requestArgs = reconnectArgs || args;
+      return this.fetch(this.url('SubscribeMessages'),createHTTPRequest(requestArgs, options.headers, abortSignal)
+        ).then(async (res) => {
+          await sseResponse(res, options, _fetch);
+      }, (error) => {
+        options.onError(error, (newArgs?: SubscribeMessagesArgs) => _fetch(newArgs));
+      });
+    };
 
     const resp = _fetch();
     return {
@@ -159,7 +162,7 @@ export class Chat implements Chat {
       closed: resp
     };
   }
-  subscribeUsers = (options: WebrpcStreamOptions<SubscribeUsersReturn>): WebrpcStreamController => {
+  subscribeUsers = (options: WebrpcStreamOptions<SubscribeUsersReturn, SubscribeUsersArgs>): WebrpcStreamController => {
     const abortController = new AbortController();
     const abortSignal = abortController.signal
 
@@ -169,12 +172,15 @@ export class Chat implements Chat {
       });
     }
 
-    const _fetch = () => this.fetch(this.url('SubscribeUsers'),createHTTPRequest({}, options.headers, options.signal)
-      ).then(async (res) => {
-        await sseResponse(res, options, _fetch);
-    }, (error) => {
-      options.onError(error, _fetch);
-    });
+    const _fetch = (reconnectArgs?: SubscribeUsersArgs) => {
+      const requestArgs = reconnectArgs || {};
+      return this.fetch(this.url('SubscribeUsers'),createHTTPRequest(requestArgs, options.headers, options.signal)
+        ).then(async (res) => {
+          await sseResponse(res, options, _fetch);
+      }, (error) => {
+        options.onError(error, (newArgs?: SubscribeUsersArgs) => _fetch(newArgs));
+      });
+    };
 
     const resp = _fetch();
     return {
@@ -186,7 +192,7 @@ export class Chat implements Chat {
   
 const sseResponse = async (
     res: Response,
-    options: WebrpcStreamOptions<any>,
+    options: WebrpcStreamOptions<any, any>,
     retryFetch: () => Promise<void>
 ) => {
     const {onMessage, onOpen, onClose, onError} = options;
