@@ -25,7 +25,17 @@ export class {{$service.Name}} implements {{$service.Name}}Client {
   
   queryKey = {
   {{- range $i, $method := $service.Methods}}
-    {{firstLetterToLower .Name}}: ({{if .Inputs | len}}req: {{.Name}}{{if $opts.compat}}Args{{else}}Request{{end}}{{end}}) => ['{{$service.Name}}', '{{firstLetterToLower .Name}}'{{if .Inputs | len}}, req{{end}}] as const,
+    {{- $methodReqName := "" -}}
+    {{- if $method.Succinct -}}
+      {{- $methodReqName = (index $method.Inputs 0).Type -}}
+    {{- else -}}
+      {{- if $opts.compat -}}
+        {{- $methodReqName = printf "%sArgs" $method.Name -}}
+      {{- else -}}
+        {{- $methodReqName = printf "%sRequest" $method.Name -}}
+      {{- end -}}
+    {{- end}}
+    {{firstLetterToLower .Name}}: ({{if .Inputs | len}}req: {{ $methodReqName}}{{end}}) => ['{{$service.Name}}', '{{firstWordToLower .Name}}'{{if .Inputs | len}}, req{{end}}] as const,
   {{- end}}
   }
 
