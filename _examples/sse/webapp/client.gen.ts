@@ -274,7 +274,7 @@ const sseResponse = async (
 
 
 const createHttpRequest = (body: string = '{}', headers: object = {}, signal: AbortSignal | null = null): object => {
-  const reqHeaders: { [key: string]: string } = { ...headers, 'Content-Type': 'application/json' }
+  const reqHeaders: { [key: string]: string } = { ...headers, 'Content-Type': 'application/json', WebrpcHeader: WebrpcHeaderValue }
   return { method: 'POST', headers: reqHeaders, body, signal }
 }
 
