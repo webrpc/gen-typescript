@@ -1,0 +1,23 @@
+webrpc = v1
+
+name = bigint-unit-tests
+version = v1.0.0
+
+struct Message
+  - id: bigint
+  - userId: bigint
+  - timestamp: bigint
+  - content: string
+
+struct BigIntArrayTest
+  - ids: []bigint
+  - timestamps: []bigint
+  - messages: []Message
+  - optionalIds?: []bigint
+
+struct BigIntArrayResponse
+  - data: BigIntArrayTest
+
+service BigIntTestService
+  - GetBigIntArrays() => (BigIntArrayResponse)
+  - SendBigIntArrays(data: BigIntArrayTest) => (success: bool)
