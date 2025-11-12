@@ -90,7 +90,7 @@ export class Chat implements ChatClient {
   sendMessage = (req: SendMessageRequest, headers?: object, signal?: AbortSignal): Promise<SendMessageResponse> => {
     return this.fetch(
       this.url('SendMessage'),
-      createHttpRequest(JsonEncode(req, 'SendMessageRequest'), headers, signal)).then((res) => {
+      createHttpRequest(JsonEncode(req), headers, signal)).then((res) => {
       return buildResponse(res).then(_data => {
         return JsonDecode<SendMessageResponse>(_data, 'SendMessageResponse')
       })
@@ -110,7 +110,7 @@ export class Chat implements ChatClient {
     }
 
     const _fetch = () => this.fetch(this.url('SubscribeMessages'),
-      createHttpRequest(JsonEncode(req, 'SubscribeMessagesRequest'), options.headers, abortSignal)
+      createHttpRequest(JsonEncode(req), options.headers, abortSignal)
     ).then(async (res) => {
       await sseResponse(res, options, _fetch)
     }, (error) => {
@@ -321,7 +321,7 @@ export interface WebrpcStreamController {
 
 
 
-export const JsonEncode = <T = any>(obj: T, _typ: string = ''): string => {
+export const JsonEncode = <T = any>(obj: T): string => {
   return JSON.stringify(obj)
 }
 

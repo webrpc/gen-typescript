@@ -236,7 +236,7 @@ const validateType = (value: any, type: string) => {
 }
 
 
-export const JsonEncode = <T = any>(obj: T, _typ: string = ''): string => {
+export const JsonEncode = <T = any>(obj: T): string => {
   return JSON.stringify(obj)
 }
 

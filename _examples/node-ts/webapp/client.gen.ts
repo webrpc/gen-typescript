@@ -123,7 +123,7 @@ export class Example implements ExampleClient {
   getUser = (req: GetUserRequest, headers?: object, signal?: AbortSignal): Promise<GetUserResponse> => {
     return this.fetch(
       this.url('GetUser'),
-      createHttpRequest(JsonEncode(req, 'GetUserRequest'), headers, signal)).then((res) => {
+      createHttpRequest(JsonEncode(req), headers, signal)).then((res) => {
       return buildResponse(res).then(_data => {
         return JsonDecode<GetUserResponse>(_data, 'GetUserResponse')
       })
@@ -135,7 +135,7 @@ export class Example implements ExampleClient {
   getArticle = (req: GetArticleRequest, headers?: object, signal?: AbortSignal): Promise<GetArticleResponse> => {
     return this.fetch(
       this.url('GetArticle'),
-      createHttpRequest(JsonEncode(req, 'GetArticleRequest'), headers, signal)).then((res) => {
+      createHttpRequest(JsonEncode(req), headers, signal)).then((res) => {
       return buildResponse(res).then(_data => {
         return JsonDecode<GetArticleResponse>(_data, 'GetArticleResponse')
       })
@@ -177,7 +177,7 @@ export type Fetch = (input: RequestInfo, init?: RequestInit) => Promise<Response
 
 
 
-export const JsonEncode = <T = any>(obj: T, _typ: string = ''): string => {
+export const JsonEncode = <T = any>(obj: T): string => {
   return JSON.stringify(obj)
 }
 
