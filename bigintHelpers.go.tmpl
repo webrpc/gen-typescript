@@ -85,7 +85,7 @@ function decodeType(typ: string, obj: any): any {
         for (let i = 0; i < arr.length; i++) {
           const v = arr[i]
           if (typeof v === 'string') {
-            try { arr[i] = BigInt(v) } catch (e) { throw WebrpcBadResponseError.new({ cause: `Invalid bigint value at ${base}[${i}]: ${v}` }) }
+            try { arr[i] = BigInt(v) } catch (e) { throw WebrpcBadResponseError.new({ cause: `Invalid bigint value for ${base}[${i}]: ${v}` }) }
           }
         }
       }
