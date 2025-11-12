@@ -66,7 +66,7 @@ export class {{$service.Name}} implements {{$service.Name}}Client {
     }
 
     const _fetch = () => this.fetch(this.url('{{.Name}}'),
-      {{if .Inputs | len }}createHttpRequest(JsonEncode(req, '{{$methodReqName}}'), options.headers, abortSignal){{- else}}createHttpRequest('{}', options.headers, options.signal){{end }}
+      {{if .Inputs | len }}createHttpRequest(JsonEncode(req), options.headers, abortSignal){{- else}}createHttpRequest('{}', options.headers, options.signal){{end }}
     ).then(async (res) => {
       await sseResponse(res, options, _fetch)
     }, (error) => {
@@ -83,7 +83,7 @@ export class {{$service.Name}} implements {{$service.Name}}Client {
     return this.fetch(
       this.url('{{.Name}}'),
       {{- if .Inputs | len }}
-      createHttpRequest(JsonEncode(req, '{{$methodReqName}}'), headers, signal)).then((res) => {
+      createHttpRequest(JsonEncode(req), headers, signal)).then((res) => {
       {{- else }}
       createHttpRequest('{}', headers, signal)).then((res) => {
       {{- end }}

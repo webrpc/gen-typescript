@@ -117,7 +117,7 @@ export const JsonDecode = <T = any>(data: string | any, typ: string = ''): T => 
   return decodeType(typ, parsed) as T
 }
 {{- else}}
-{{- "\n\n" -}}export const JsonEncode = <T = any>(obj: T, _typ: string = ''): string => {
+{{- "\n\n" -}}export const JsonEncode = <T = any>(obj: T): string => {
   return JSON.stringify(obj)
 }
 
