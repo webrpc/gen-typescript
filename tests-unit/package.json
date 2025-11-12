@@ -7,7 +7,8 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "generate": "webrpc-gen -schema=service.ridl -target=../../ -out=client.gen.ts"
+    "test:update": "vitest run -u",
+    "generate": "webrpc-gen -schema=service.ridl -target=../ -out=client.gen.ts"
   },
   "devDependencies": {
     "@tsconfig/strictest": "^2.0.7",
