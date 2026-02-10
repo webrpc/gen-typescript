@@ -1,5 +1,7 @@
 {{- define "client" -}}
 
+{{- $basepath := .BasePath -}}
+{{- $services := .Services -}}
 {{- $typeMap := .TypeMap -}}
 {{- $opts := .Opts -}}
 
@@ -8,11 +10,11 @@
 // Client
 //
 
-{{- "\n" -}}{{- range $serviceIndex, $service := .Services}}
+{{- "\n" -}}{{- range $serviceIndex, $service := $services}}
 export class {{$service.Name}} implements {{$service.Name}}Client {
   protected hostname: string
   protected fetch: Fetch
-  protected path = '/rpc/{{$service.Name}}/'
+  protected path = '{{$basepath}}{{$service.Name}}/'
 
   constructor(hostname: string, fetch: Fetch) {
     this.hostname = hostname.replace(/\/*$/, '')

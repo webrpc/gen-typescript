@@ -100,14 +100,14 @@ export const WebrpcSchemaHash = "{{.SchemaHash}}"
 {{- "\n" -}}
 
 {{- if $opts.client -}}
-{{template "client" dict "Services" .Services "Opts" $opts "TypeMap" $typeMap}}
+{{template "client" dict "BasePath" .BasePath "Services" .Services "Opts" $opts "TypeMap" $typeMap}}
 {{template "clientHelpers" dict "WebrpcErrors" .WebrpcErrors "SchemaErrors" .Errors "Opts" $opts }}
 {{- end -}}
 
 {{- "\n" -}}
 
 {{- if $opts.server -}}
-{{template "server" dict "Services" .Services "Opts" $opts "TypeMap" $typeMap "UsesBigInts" $usesBigInts}}
+{{template "server" dict "BasePath" .BasePath "Services" .Services "Opts" $opts "TypeMap" $typeMap "UsesBigInts" $usesBigInts}}
 {{template "serverHelpers" dict "Types" .Types "TypeMap" $typeMap}}
 {{- end -}}
 
