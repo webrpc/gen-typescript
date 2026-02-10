@@ -565,7 +565,7 @@ export const webrpcErrorByCode: { [code: number]: any } = {
 
 export const WebrpcHeader = "Webrpc"
 
-export const WebrpcHeaderValue = "webrpc@v0.32.2-5-g3c96d2e;@unknown;webrpc-sse-chat@v1.0.0"
+export const WebrpcHeaderValue = "webrpc@v0.32.3;@unknown;webrpc-sse-chat@v1.0.0"
 
 type WebrpcGenVersions = {
   WebrpcGenVersion: string;
