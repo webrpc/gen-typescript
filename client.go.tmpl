@@ -48,6 +48,9 @@ export class {{$service.Name}} implements {{$service.Name}}Client {
     {{- $methodReqName = (index $method.Inputs 0).Type -}}
     {{- if gt (len $method.Outputs) 0 -}}
       {{- $methodRespName = (index $method.Outputs 0).Type -}}
+      {{- if isCoreType (index $method.Outputs 0).Type -}}
+        {{- $methodRespName = get $typeMap (index $method.Outputs 0).Type -}}
+      {{- end -}}
     {{- end -}}
   {{- else -}}
     {{- if $opts.compat -}}
@@ -71,7 +74,7 @@ export class {{$service.Name}} implements {{$service.Name}}Client {
       {{- $hasBodyInputs = true -}}
     {{- end -}}
   {{- end}}
-  {{firstLetterToLower .Name}} = ({{template "methodInputs" dict "Method" . "Opts" $opts "TypeMap" $typeMap}}): {{if $method.StreamOutput}}WebrpcStreamController{{else}}{{if and $method.Succinct (gt (len $method.Outputs) 0)}}Promise<{{(index $method.Outputs 0).Type}}>{{else if $method.Succinct}}Promise<void>{{else}}Promise<{{$method.Name}}{{if $opts.compat}}Return{{else}}Response{{end}}>{{end}}{{end}} => {
+  {{firstLetterToLower .Name}} = ({{template "methodInputs" dict "Method" . "Opts" $opts "TypeMap" $typeMap}}): {{if $method.StreamOutput}}WebrpcStreamController{{else}}{{if and $method.Succinct (gt (len $method.Outputs) 0)}}Promise<{{template "type" dict "Type" (index $method.Outputs 0).Type "TypeMap" $typeMap}}>{{else if $method.Succinct}}Promise<void>{{else}}Promise<{{$method.Name}}{{if $opts.compat}}Return{{else}}Response{{end}}>{{end}}{{end}} => {
   {{- if $method.StreamOutput }}
     const abortController = new AbortController()
     const abortSignal = abortController.signal
@@ -85,7 +88,7 @@ export class {{$service.Name}} implements {{$service.Name}}Client {
 
     const _headers: Record<string, string> = { ...((options.headers || {}) as Record<string, string>) }
     {{- range $_, $hf := $method.HeaderFields}}
-    if (req.{{$hf.Name}} !== undefined && req.{{$hf.Name}} !== null{{if $hf.OmitEmpty}} && req.{{$hf.Name}} !== "" && req.{{$hf.Name}} !== 0 && req.{{$hf.Name}} !== false{{end}}) {
+    if (req.{{$hf.Name}} != null{{if $hf.OmitEmpty}} && req.{{$hf.Name}} !== {{if and (isCoreType $hf.Type) (eq (get $typeMap $hf.Type) "string")}}""{{else if and (isCoreType $hf.Type) (eq (get $typeMap $hf.Type) "boolean")}}false{{else}}0{{end}}{{end}}) {
       _headers["{{$hf.Name}}"] = String(req.{{$hf.Name}})
     }
     {{- end}}
@@ -122,7 +125,7 @@ export class {{$service.Name}} implements {{$service.Name}}Client {
     {{- if $hasHeaderInputs }}
     const _headers: Record<string, string> = { ...((headers || {}) as Record<string, string>) }
     {{- range $_, $hf := $method.HeaderFields}}
-    if (req.{{$hf.Name}} !== undefined && req.{{$hf.Name}} !== null{{if $hf.OmitEmpty}} && req.{{$hf.Name}} !== "" && req.{{$hf.Name}} !== 0 && req.{{$hf.Name}} !== false{{end}}) {
+    if (req.{{$hf.Name}} != null{{if $hf.OmitEmpty}} && req.{{$hf.Name}} !== {{if and (isCoreType $hf.Type) (eq (get $typeMap $hf.Type) "string")}}""{{else if and (isCoreType $hf.Type) (eq (get $typeMap $hf.Type) "boolean")}}false{{else}}0{{end}}{{end}}) {
       _headers["{{$hf.Name}}"] = String(req.{{$hf.Name}})
     }
     {{- end}}
