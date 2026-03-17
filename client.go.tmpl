@@ -85,7 +85,7 @@ export class {{$service.Name}} implements {{$service.Name}}Client {
 
     const _headers: Record<string, string> = { ...((options.headers || {}) as Record<string, string>) }
     {{- range $_, $hf := $method.HeaderFields}}
-    if (req.{{$hf.Name}} !== undefined && req.{{$hf.Name}} !== null) {
+    if (req.{{$hf.Name}} !== undefined && req.{{$hf.Name}} !== null{{if $hf.OmitEmpty}} && req.{{$hf.Name}} !== "" && req.{{$hf.Name}} !== 0 && req.{{$hf.Name}} !== false{{end}}) {
       _headers["{{$hf.Name}}"] = String(req.{{$hf.Name}})
     }
     {{- end}}
@@ -122,7 +122,7 @@ export class {{$service.Name}} implements {{$service.Name}}Client {
     {{- if $hasHeaderInputs }}
     const _headers: Record<string, string> = { ...((headers || {}) as Record<string, string>) }
     {{- range $_, $hf := $method.HeaderFields}}
-    if (req.{{$hf.Name}} !== undefined && req.{{$hf.Name}} !== null) {
+    if (req.{{$hf.Name}} !== undefined && req.{{$hf.Name}} !== null{{if $hf.OmitEmpty}} && req.{{$hf.Name}} !== "" && req.{{$hf.Name}} !== 0 && req.{{$hf.Name}} !== false{{end}}) {
       _headers["{{$hf.Name}}"] = String(req.{{$hf.Name}})
     }
     {{- end}}
