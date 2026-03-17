@@ -13,7 +13,7 @@
 export interface {{$service.Name}}Server<Context = unknown> {
   {{- range $_, $method := $service.Methods}}
   {{- if $method.Succinct }}
-  {{firstLetterToLower $method.Name}}(ctx: Context, req: {{(index $method.Inputs 0).Type}}): Promise<{{(index $method.Outputs 0).Type}}>
+  {{firstLetterToLower $method.Name}}(ctx: Context, req: {{(index $method.Inputs 0).Type}}): Promise<{{if gt (len $method.Outputs) 0}}{{(index $method.Outputs 0).Type}}{{else}}void{{end}}>
   {{- else}}
   {{- if $opts.compat }}
   {{firstLetterToLower $method.Name}}(ctx: Context, req: {{$method.Name}}Args): Promise<{{$method.Name}}Return>

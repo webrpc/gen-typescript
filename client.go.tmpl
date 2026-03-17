@@ -24,7 +24,7 @@ export class {{$service.Name}} implements {{$service.Name}}Client {
   private url(name: string): string {
     return this.hostname + this.path + name
   }
-  
+
   queryKey = {
   {{- range $i, $method := $service.Methods}}
     {{- $methodReqName := "" -}}
@@ -46,7 +46,9 @@ export class {{$service.Name}} implements {{$service.Name}}Client {
   {{- $methodRespName := "" -}}
   {{- if $method.Succinct -}}
     {{- $methodReqName = (index $method.Inputs 0).Type -}}
-    {{- $methodRespName = (index $method.Outputs 0).Type -}}
+    {{- if gt (len $method.Outputs) 0 -}}
+      {{- $methodRespName = (index $method.Outputs 0).Type -}}
+    {{- end -}}
   {{- else -}}
     {{- if $opts.compat -}}
       {{- $methodReqName = printf "%sArgs" $method.Name -}}
@@ -56,7 +58,20 @@ export class {{$service.Name}} implements {{$service.Name}}Client {
       {{- $methodRespName = printf "%sResponse" $method.Name -}}
     {{- end -}}
   {{- end}}
-  {{firstLetterToLower .Name}} = ({{template "methodInputs" dict "Method" . "Opts" $opts "TypeMap" $typeMap}}): {{if $method.StreamOutput}}WebrpcStreamController{{else}}{{if $method.Succinct}}Promise<{{(index $method.Outputs 0).Type}}>{{else}}Promise<{{$method.Name}}{{if $opts.compat}}Return{{else}}Response{{end}}>{{end}}{{end}} => {
+  {{- /* Check for header/body inputs */ -}}
+  {{- $hasHeaderInputs := false -}}
+  {{- $hasBodyInputs := false -}}
+  {{- if $method.HeaderFields -}}
+    {{- $hasHeaderInputs = true -}}
+    {{- if $method.BodyFields -}}
+      {{- $hasBodyInputs = true -}}
+    {{- end -}}
+  {{- else -}}
+    {{- if $method.Inputs | len -}}
+      {{- $hasBodyInputs = true -}}
+    {{- end -}}
+  {{- end}}
+  {{firstLetterToLower .Name}} = ({{template "methodInputs" dict "Method" . "Opts" $opts "TypeMap" $typeMap}}): {{if $method.StreamOutput}}WebrpcStreamController{{else}}{{if and $method.Succinct (gt (len $method.Outputs) 0)}}Promise<{{(index $method.Outputs 0).Type}}>{{else if $method.Succinct}}Promise<void>{{else}}Promise<{{$method.Name}}{{if $opts.compat}}Return{{else}}Response{{end}}>{{end}}{{end}} => {
   {{- if $method.StreamOutput }}
     const abortController = new AbortController()
     const abortSignal = abortController.signal
@@ -66,9 +81,31 @@ export class {{$service.Name}} implements {{$service.Name}}Client {
         signal: options.signal,
       })
     }
+    {{- if $hasHeaderInputs }}
+
+    const _headers: Record<string, string> = { ...((options.headers || {}) as Record<string, string>) }
+    {{- range $_, $hf := $method.HeaderFields}}
+    if (req.{{$hf.Name}} !== undefined && req.{{$hf.Name}} !== null) {
+      _headers["{{$hf.Name}}"] = String(req.{{$hf.Name}})
+    }
+    {{- end}}
+    {{- end}}
 
     const _fetch = () => this.fetch(this.url('{{.Name}}'),
-      {{if .Inputs | len }}createHttpRequest(JsonEncode(req), options.headers, abortSignal){{- else}}createHttpRequest('{}', options.headers, options.signal){{end }}
+      {{- if .Inputs | len }}
+      {{- if $hasHeaderInputs }}
+      createHttpRequest(JsonEncode({{- if $hasBodyInputs }}(() => { const {
+        {{- $hi := 0 -}}
+        {{- range $_, $hf := $method.HeaderFields -}}
+          {{- if $hi}}, {{end -}}
+          {{$hf.Name}}: _h{{$hi}}
+        {{- $hi = add $hi 1 -}}
+        {{- end}}, ..._body} = req; return _body})()
+        {{- else}}{}{{- end}}), _headers, abortSignal)
+      {{- else }}
+      createHttpRequest(JsonEncode(req), options.headers, abortSignal)
+      {{- end }}
+      {{- else}}createHttpRequest('{}', options.headers, options.signal){{end }}
     ).then(async (res) => {
       await sseResponse(res, options, _fetch)
     }, (error) => {
@@ -82,15 +119,36 @@ export class {{$service.Name}} implements {{$service.Name}}Client {
     }
   }
   {{- else }}
+    {{- if $hasHeaderInputs }}
+    const _headers: Record<string, string> = { ...((headers || {}) as Record<string, string>) }
+    {{- range $_, $hf := $method.HeaderFields}}
+    if (req.{{$hf.Name}} !== undefined && req.{{$hf.Name}} !== null) {
+      _headers["{{$hf.Name}}"] = String(req.{{$hf.Name}})
+    }
+    {{- end}}
+    {{- end}}
     return this.fetch(
       this.url('{{.Name}}'),
       {{- if .Inputs | len }}
+      {{- if $hasHeaderInputs }}
+      createHttpRequest(JsonEncode({{- if $hasBodyInputs }}(() => { const {
+        {{- $hi := 0 -}}
+        {{- range $_, $hf := $method.HeaderFields -}}
+          {{- if $hi}}, {{end -}}
+          {{$hf.Name}}: _h{{$hi}}
+        {{- $hi = add $hi 1 -}}
+        {{- end}}, ..._body} = req; return _body})()
+        {{- else}}{}{{- end}}), _headers, signal)).then((res) => {
+      {{- else }}
       createHttpRequest(JsonEncode(req), headers, signal)).then((res) => {
+      {{- end }}
       {{- else }}
       createHttpRequest('{}', headers, signal)).then((res) => {
       {{- end }}
       return buildResponse(res).then(_data => {
+        {{- if $methodRespName }}
         return JsonDecode<{{$methodRespName}}>(_data, '{{$methodRespName}}')
+        {{- end }}
       })
     }, (error) => {
       throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
