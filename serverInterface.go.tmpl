@@ -13,7 +13,7 @@
 export interface {{$service.Name}}Server<Context = unknown> {
   {{- range $_, $method := $service.Methods}}
   {{- if $method.Succinct }}
-  {{firstLetterToLower $method.Name}}(ctx: Context, req: {{(index $method.Inputs 0).Type}}): Promise<{{(index $method.Outputs 0).Type}}>
+  {{firstLetterToLower $method.Name}}(ctx: Context, req: {{(index $method.Inputs 0).Type}}): Promise<{{template "type" dict "Type" (index $method.Outputs 0).Type "TypeMap" $typeMap}}>
   {{- else}}
   {{- if $opts.compat }}
   {{firstLetterToLower $method.Name}}(ctx: Context, req: {{$method.Name}}Args): Promise<{{$method.Name}}Return>
