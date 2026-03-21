@@ -14,6 +14,10 @@ service Example
   # Get article by id.
   - GetArticle(GetArticleRequest) => (GetArticleResponse)
 
+type Username: string
+
+type Age: uint32
+
 enum Kind: uint32
   - USER
   - ADMIN

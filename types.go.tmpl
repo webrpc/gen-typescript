@@ -24,6 +24,10 @@ export enum {{$type.Name}} {
 }
 {{end -}}
 
+{{- if isAliasType $type }}
+export type {{$type.Name}} = {{template "type" dict "Type" $type.Type "TypeMap" $typeMap}}
+{{end -}}
+
 {{- if isStructType $type }}
 export interface {{$type.Name}} {
   {{- range $_, $field := $type.Fields}}
