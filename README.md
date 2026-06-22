@@ -67,6 +67,7 @@ Change any of the following values by passing `-option="Value"` CLI flag to `web
 | `-client`          | generate client code                    | `false`       | v0.0.1  |
 | `-server`          | generate server code                    | `false`       | v0.0.1  |
 | `-webrpcHeader`    | send Webrpc header in all HTTP requests | `true`        | v0.15.0 |
+| `-schemaHash=false` | don't emit schema hash + version consts | `true`        | v0.28.0 |
 
 **Note:** Generated code requires ES2022+ runtime environment.
 
