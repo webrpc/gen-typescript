@@ -38,6 +38,42 @@ function UserProfile({ userId }) {
 
 The query keys follow the pattern `[ServiceName, methodName, request?]` and are fully type-safe with `as const` assertions.
 
+### Streaming client style
+
+For RIDL methods declared with `=> stream (...)`, the default generated TypeScript client uses the existing callback API:
+
+```typescript
+client.subscribeMessages(req, {
+  onMessage(message) {},
+  onError(error, reconnect) {},
+})
+```
+
+Pass `-streamClient=asyncIterable` to generate stream methods that return `AsyncIterable` instead:
+
+```typescript
+const stream = client.subscribeMessages(req, { signal })
+
+for await (const message of stream) {
+  console.log(message)
+}
+```
+
+This keeps the generated WebRPC client independent of any UI/cache library while making it easy to use with TanStack Query's `streamedQuery` helper:
+
+```typescript
+import { experimental_streamedQuery as streamedQuery } from '@tanstack/react-query'
+
+useQuery({
+  queryKey: client.queryKey.subscribeMessages(req),
+  queryFn: streamedQuery({
+    streamFn: ({ signal }) => client.subscribeMessages(req, { signal }),
+    initialValue: [],
+    reducer: (messages, chunk) => [...messages, chunk.message],
+  }),
+})
+```
+
 ### Enum style: `enum` vs `union`
 
 TypeScript best practices are moving away from `enum` declarations — they emit runtime
@@ -142,6 +178,7 @@ Change any of the following values by passing `-option="Value"` CLI flag to `web
 | `-webrpcHeader`    | send Webrpc header in all HTTP requests | `true`        | v0.15.0 |
 | `-schemaHash=false` | don't emit schema hash + version consts | `true`        | v0.28.0 |
 | `-enumStyle`       | enum codegen style: `enum` or `union`   | `enum`        | v0.29.0 |
+| `-streamClient`    | streaming client style: `callback` or `asyncIterable` | `callback` | next |
 
 **Note:** Generated code requires ES2022+ runtime environment.
 

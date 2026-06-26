@@ -1,4 +1,171 @@
 {{ define "sse" }}
+{{- $opts := .Opts -}}
+{{- if $opts.streamClientAsyncIterable }}
+const WebrpcStreamReadTimeoutMs = (10 + 1) * 1000
+
+const webrpcAsyncIterable = <T>(
+    fetchResponse: () => Promise<Response>,
+    responseType: string,
+    signal?: AbortSignal
+): WebrpcStream<T> => ({
+    async *[Symbol.asyncIterator]() {
+        let res: Response
+        try {
+            res = await fetchResponse()
+        } catch (error) {
+            if (signal?.aborted) {
+                return
+            }
+            throw WebrpcRequestFailedError.new({ cause: `fetch(): ${error instanceof Error ? error.message : String(error)}` })
+        }
+
+        yield* readWebrpcStream<T>(res, responseType, signal)
+    }
+})
+
+const readWebrpcStream = async function* <T>(
+    res: Response,
+    responseType: string,
+    signal?: AbortSignal
+): AsyncGenerator<T> {
+    if (!res.ok) {
+        await buildResponse(res)
+        return
+    }
+
+    if (!res.body) {
+        throw WebrpcBadResponseError.new({
+            status: res.status,
+            cause: "Invalid response, missing body",
+        })
+    }
+
+    const reader = res.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ""
+
+    try {
+        while (true) {
+            const { value, done } = await readWebrpcStreamChunk(reader, signal)
+
+            if (done) {
+                buffer += decoder.decode()
+                if (buffer.trim().length > 0) {
+                    yield decodeWebrpcStreamLine<T>(buffer, responseType, res.status)
+                }
+                return
+            }
+
+            buffer += decoder.decode(value, { stream: true })
+
+            const lines = buffer.split("\n")
+            buffer = lines.pop() || ""
+
+            for (const line of lines) {
+                if (line.trim().length === 0) {
+                    continue
+                }
+                yield decodeWebrpcStreamLine<T>(line, responseType, res.status)
+            }
+        }
+    } catch (error) {
+        if (error instanceof WebrpcError) {
+            try {
+                await reader.cancel(error)
+            } catch (_) {
+                // Ignore cleanup errors and report the protocol error below.
+            }
+            throw error
+        }
+
+        if (
+            signal?.aborted ||
+            (error instanceof DOMException && error.name === "AbortError")
+        ) {
+            return
+        }
+
+        try {
+            await reader.cancel(error)
+        } catch (_) {
+            // Ignore cleanup errors and report the original stream error below.
+        }
+
+        throw WebrpcStreamLostError.new({
+            cause: `reader.read(): ${error instanceof Error ? error.message : String(error)}`,
+        })
+    } finally {
+        try {
+            reader.releaseLock()
+        } catch (_) {
+            // Ignore releaseLock errors; the stream is already finishing.
+        }
+    }
+}
+
+const readWebrpcStreamChunk = (
+    reader: ReadableStreamDefaultReader<Uint8Array>,
+    signal?: AbortSignal
+): Promise<ReadableStreamReadResult<Uint8Array>> => {
+    return new Promise((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+            cleanup()
+            reject(new Error("Timeout, no data or heartbeat received"))
+        }, WebrpcStreamReadTimeoutMs)
+
+        const abort = () => {
+            cleanup()
+            reject(new DOMException("AbortError", "AbortError"))
+        }
+
+        const cleanup = () => {
+            clearTimeout(timeoutId)
+            signal?.removeEventListener("abort", abort)
+        }
+
+        if (signal?.aborted) {
+            abort()
+            return
+        }
+
+        signal?.addEventListener("abort", abort, { once: true })
+
+        reader.read().then(
+            (result) => {
+                cleanup()
+                resolve(result)
+            },
+            (error) => {
+                cleanup()
+                reject(error)
+            }
+        )
+    })
+}
+
+const decodeWebrpcStreamLine = <T>(line: string, responseType: string, status: number): T => {
+    let data: any
+    try {
+        data = JsonDecode<any>(line, responseType)
+    } catch (error) {
+        if (error instanceof WebrpcError) {
+            throw error
+        }
+        throw WebrpcBadResponseError.new({
+            status,
+            cause: `JsonDecode(): ${error instanceof Error ? error.message : String(error)}`,
+        })
+    }
+
+    if (data && Object.prototype.hasOwnProperty.call(data, "webrpcError")) {
+        const error = data.webrpcError
+        const code: number = typeof error.code === "number" ? error.code : 0
+        throw (webrpcErrorByCode[code] || WebrpcError).new(error)
+    }
+
+    return data as T
+}
+{{- else }}
 const sseResponse = async (
     res: Response,
     options: WebrpcStreamOptions<any>,
@@ -120,4 +287,5 @@ const sseResponse = async (
         return;
     }
 };
+{{- end }}
 {{ end }}
