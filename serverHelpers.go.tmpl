@@ -18,7 +18,7 @@ const JS_TYPES = [
 ]
 
 {{- "\n" -}}{{- range $_, $type := $types }}
-const validate{{ $type.Name }} = (value: any) => {
+const validate{{ $type.Name }} = ({{if gt (len $type.Fields) 0}}value{{else}}_value{{end}}: any) => {
   {{- range $_, $field := $type.Fields }}
   {{- if $field.Optional }}
   if ("{{template "fieldName" dict "Field" $field }}" in value && !validateType(value["{{template "fieldName" dict "Field" $field }}"], "{{template "jsType" dict "Type" (coalesce $field.Type $type.Type) "TypeMap" $typeMap}}")) {

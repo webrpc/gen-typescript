@@ -6,6 +6,7 @@
   "license": "MIT",
   "scripts": {
     "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.generated.json",
     "test:watch": "vitest",
     "test:update": "vitest run -u",
     "generate": "webrpc-gen -schema=service.ridl -target=../ -out=client.gen.ts",

@@ -164,11 +164,11 @@ const JS_TYPES = [
     "undefined"
 ]
 
-const validateUsername = (value: any) => {
+const validateUsername = (_value: any) => {
   return true
 }
 
-const validateAge = (value: any) => {
+const validateAge = (_value: any) => {
   return true
 }
 

@@ -38,9 +38,10 @@ jobs:
         with:
           version: 9
 
-      - name: Unit tests (regenerate enum fixtures against current templates, then run vitest)
+      - name: Type check generated files and run unit tests
         run: |
           cd tests-unit
           pnpm install --frozen-lockfile
           pnpm generate:enum
+          pnpm typecheck
           pnpm test
