@@ -10,7 +10,8 @@
     "test:watch": "vitest",
     "test:update": "vitest run -u",
     "generate": "webrpc-gen -schema=service.ridl -target=../ -out=client.gen.ts",
-    "generate:enum": "webrpc-gen -schema=enum.ridl -target=../ -client -out=enum-default.gen.ts && webrpc-gen -schema=enum.ridl -target=../ -client -enumStyle=union -out=enum-union.gen.ts"
+    "generate:enum": "webrpc-gen -schema=enum.ridl -target=../ -client -out=enum-default.gen.ts && webrpc-gen -schema=enum.ridl -target=../ -client -enumStyle=union -out=enum-union.gen.ts",
+    "generate:stream": "webrpc-gen -schema=stream.ridl -target=../ -client -streamClient=asyncIterable -out=stream-async.gen.ts"
   },
   "devDependencies": {
     "@tsconfig/strictest": "^2.0.7",

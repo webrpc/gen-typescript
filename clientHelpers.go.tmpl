@@ -31,6 +31,14 @@ const buildResponse = (res: Response): Promise<any> => {
 export type Fetch = (input: RequestInfo, init?: RequestInit) => Promise<Response>
 
 {{if $opts.streaming}}
+{{- if $opts.streamClientAsyncIterable }}
+export interface WebrpcOptions {
+  headers?: HeadersInit;
+  signal?: AbortSignal;
+}
+
+export type WebrpcStream<T> = AsyncIterable<T>
+{{- else }}
 export interface WebrpcStreamOptions<T> extends WebrpcOptions {
   onMessage: (message: T) => void;
   onError: (error: WebrpcError, reconnect: () => void) => void;
@@ -47,5 +55,6 @@ export interface WebrpcStreamController {
   abort: (reason?: any) => void;
   closed: Promise<void>;
 }
+{{- end }}
 {{end}}
 {{end}}

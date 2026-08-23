@@ -8,7 +8,11 @@
 
 {{- if gt (len $method.Inputs) 0}}req: {{(index $method.Inputs 0).Type}}, {{end}}
 {{- if $method.StreamOutput -}}
+    {{- if $opts.streamClientAsyncIterable -}}
+    options?: WebrpcOptions
+    {{- else -}}
     options: WebrpcStreamOptions<{{(index $method.Outputs 0).Type}}>
+    {{- end -}}
 {{- else -}}
     headers?: object, signal?: AbortSignal
 {{- end -}}
@@ -17,7 +21,11 @@
 
 {{- if gt (len $method.Inputs) 0}}req: {{$method.Name}}Args, {{end}}
 {{- if $method.StreamOutput -}}
+    {{- if $opts.streamClientAsyncIterable -}}
+    options?: WebrpcOptions
+    {{- else -}}
     options: WebrpcStreamOptions<{{$method.Name}}Return>
+    {{- end -}}
 {{- else -}}
     headers?: object, signal?: AbortSignal
 {{- end -}}
@@ -26,7 +34,11 @@
 
 {{- if gt (len $method.Inputs) 0}}req: {{$method.Name}}Request, {{end}}
 {{- if $method.StreamOutput -}}
+    {{- if $opts.streamClientAsyncIterable -}}
+    options?: WebrpcOptions
+    {{- else -}}
     options: WebrpcStreamOptions<{{$method.Name}}Response>
+    {{- end -}}
 {{- else -}}
     headers?: object, signal?: AbortSignal
 {{- end -}}

@@ -1,0 +1,15 @@
+webrpc = v1
+
+name = stream-async-unit-tests
+version = v1.0.0
+basepath = /rpc
+
+struct Message
+  - id: uint64
+  - text: string
+
+service StreamTest
+  - StreamMessages(roomId: string) => stream (message: Message)
+  - StreamTicks() => stream (tick: uint64)
+
+error 100 StreamBoom "stream boom" HTTP 500

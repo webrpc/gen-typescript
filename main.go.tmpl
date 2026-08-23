@@ -8,6 +8,7 @@
 {{- set $opts "webrpcHeader" (ternary (eq (default .Opts.webrpcHeader "true") "false") false true) -}}
 {{- set $opts "schemaHash" (ternary (eq (default .Opts.schemaHash "true") "false") false true) -}}
 {{- set $opts "enumStyle" (default .Opts.enumStyle "enum") -}}
+{{- set $opts "streamClient" (default .Opts.streamClient "callback") -}}
 
 {{- /* Print help on -help. */ -}}
 {{- if exists .Opts "help" -}}
@@ -28,6 +29,14 @@
   {{- stderrPrintf "-enumStyle=%q is not supported, must be \"enum\" or \"union\"\n" $opts.enumStyle -}}
   {{- exit 1 -}}
 {{- end -}}
+
+{{- if not (in $opts.streamClient "callback" "asyncIterable") -}}
+  {{- stderrPrintf "-streamClient=%q is not supported, must be \"callback\" or \"asyncIterable\"\n" $opts.streamClient -}}
+  {{- exit 1 -}}
+{{- end -}}
+
+{{- set $opts "streamClientCallback" (eq $opts.streamClient "callback") -}}
+{{- set $opts "streamClientAsyncIterable" (eq $opts.streamClient "asyncIterable") -}}
 
 {{- if ne .WebrpcVersion "v1" -}}
   {{- stderrPrintf "%s generator error: unsupported Webrpc version %s\n" .WebrpcTarget .WebrpcVersion -}}
