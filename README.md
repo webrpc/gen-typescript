@@ -1,3 +1,11 @@
+## ⚠️ Archived
+
+This repo is now archived and has been merged directly into the upstream webrpc repo.
+
+See: https://github.com/webrpc/webrpc/tree/master/gen/typescript
+
+---
+
 # webrpc-gen Typescript templates
 
 This repo contains the templates used by the `webrpc-gen` cli to code-generate
